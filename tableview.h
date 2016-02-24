@@ -1,20 +1,30 @@
 #ifndef TABLEVIEW_H
 #define TABLEVIEW_H
 
-#include <QTableView>
 #include "tableitem.h"
+#include "tablemodel.h"
 
-class TableView : public QTableView
+#include <QTableView>
+
+
+class TableView final : public QTableView
 {
     Q_OBJECT
 
     public:
     explicit TableView (QWidget* parent = 0);
+    virtual ~TableView ()
+    {
+    }
 
+    public:
     void setItem (int row, TableItem* item);
     void setRowCount (int n);
-    void setColumnCount (int n);
-    void setHorizontalHeaderLabels (QStringList headers);
+
+    inline TableModel* model ()
+    {
+        return (qobject_cast<TableModel*> (QTableView::model ()));
+    }
 };
 
 #endif // TABLEVIEW_H

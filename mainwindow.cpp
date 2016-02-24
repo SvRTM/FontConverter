@@ -1,14 +1,29 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QFontDialog>
-#include <QGraphicsEllipseItem>
 
 #include "tablemodel.h"
-#include <QtDebug>
+
+#include <QFontDialog>
 #include <QStaticText>
-#include <QTextCodec>
 
 #include <QtDebug>
+
+
+CodeNumbers::CodeNumbers ()
+{
+    operator[](LatinLetters) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                               "abcdefghijklmnopqrstuvwxyz";
+    operator[](CyrillicLetters) = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+                                  "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+    operator[](Numbers) = "0123456789";
+    operator[](LatinSupplement) = " <>()[]{}`~;:.,'\"\\|/?!@#$%^&*-+=_";
+    operator[](Arrows) = "←↑→↓↔↕⇒⇐⇔⇑⇓↵";
+    operator[](BoxDrawing) = "─│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬";
+    operator[](BlockElements) = "▀▄█▌▐░▒▓";
+    operator[](GeometricShapes) = "■•◊○◄▼►▲▪▫";
+    operator[](MiscellanepousSymbols) = "♠♣♥♦♀♂";
+}
+
 
 MainWindow::MainWindow (QWidget* parent) : QMainWindow (parent), ui (new Ui::MainWindow)
 {
@@ -19,205 +34,160 @@ MainWindow::MainWindow (QWidget* parent) : QMainWindow (parent), ui (new Ui::Mai
     createToolBar ();
     createStatusBar ();
 
-    QGraphicsScene* scene = new QGraphicsScene ();
-    ui->graphicsView->setScene (scene);
-    textItem =
-    scene->addSimpleText ("Широкая электрификация южных губерний даст мощный толчок подъёму "
-                          "сельского хозяйства.\nJackdaws love my big sphinx of quartz.");
-    ui->graphicsView->show ();
+    createChBoxStyleStrategy ();
 
-    QGraphicsScene* scene2 = new QGraphicsScene ();
-    ui->graphicsView_2->setScene (scene2);
-    ui->graphicsView_2->show ();
-    ui->graphicsView_2->scale (20, 20);
 
-    connect (ui->graphicsView, &GraphicsView::smouseMoveEvent, this, &MainWindow::_mouseMoveEvent);
-    connect (ui->pushButton, &QPushButton::pressed, this, &MainWindow::released);
+    connect (ui->pushButton, &QPushButton::pressed, this, &MainWindow::selectFont);
 
-    TableModel* model = new TableModel (this);
-    ui->tableView->setModel (model);
+
+    QAbstractItemModel* model = ui->tableView->model ();
     QItemSelectionModel* selectionModel = new QItemSelectionModel (model);
     ui->tableView->setSelectionModel (selectionModel);
+    connect (selectionModel, &QItemSelectionModel::selectionChanged, this, &MainWindow::tableSelection);
 
-    ui->tableView->setRowCount (256);
+
+    ui->graphicsView_3->setScene (new QGraphicsScene (this));
 
 
-    connect (selectionModel, &QItemSelectionModel::currentChanged, this, &MainWindow::currentRowChanged);
-    connect (selectionModel, &QItemSelectionModel::selectionChanged, this, &MainWindow::selectionChanged);
+    // Create list view item model
+    QStandardItemModel* listModel = new QStandardItemModel (ui->listView);
+    ui->listView->setModel (listModel);
 
-    QGraphicsScene* scene3 = new QGraphicsScene ();
-    ui->graphicsView_3->setScene (scene3);
 
-    createChBoxStyleStrategy ();
+    const QListView* pListView = ui->listView;
+    connect (listModel, &QStandardItemModel::itemChanged, [pListView, listModel](QStandardItem* item)
+             {
+                 const QModelIndex index = listModel->indexFromItem (item);
+                 QItemSelectionModel* selModel = pListView->selectionModel ();
+                 selModel->select (QItemSelection (index, index), item->checkState () == Qt::Checked ?
+                                                                  QItemSelectionModel::Select :
+                                                                  QItemSelectionModel::Deselect);
+             });
+    connect (ui->listView->selectionModel (), &QItemSelectionModel::selectionChanged,
+             [listModel](const QItemSelection& selected, const QItemSelection& deselected)
+             {
+                 for (const QModelIndex& index : selected.indexes ())
+                     listModel->itemFromIndex (index)->setCheckState (Qt::Checked);
+                 for (const QModelIndex& index : deselected.indexes ())
+                     listModel->itemFromIndex (index)->setCheckState (Qt::Unchecked);
+             });
+    prepareCodeNumbersList (listModel);
 }
-void MainWindow::selectionChanged (const QItemSelection& selected, const QItemSelection& deselected)
-{
-    qDebug () << "selCha";
-
-    ui->graphicsView_3->scene ()->clear ();
-    //qDebug()<<"rowCh "<< current.row ()<<"\n";
-    QModelIndexList ni = selected.indexes ();
-    int row = 0;
-    if (ni.size () != 0)
-        row = ni[0].row ();
-    else
-        row = deselected.indexes ()[0].row ();
-
-    QPixmap mp = (qobject_cast<TableModel*> (ui->tableView->model ()))->getData (row);
-    selectedPixmap = mp;
-    if (mp.isNull ())
-        return;
-    QPixmap m =
-    QPixmap::fromImage (mp.toImage ().convertToFormat (QImage::Format_Grayscale8, Qt::AvoidDither));
-
-    int width = m.width ();
-    int height = m.height ();
-    QPixmap pm1 = m.scaled (width * 10, height * 10, Qt::KeepAspectRatio);
-    QPainter pa1 (&pm1);
-    pa1.setPen (Qt::gray);
-    for (int n = 0; n <= width * 10; n += 10)
-        pa1.drawLine (n, 0, n, height * 10);
-    for (int n = 0; n <= height * 10; n += 10)
-        pa1.drawLine (0, n, width * 10, n);
-    ui->graphicsView_3->scene ()->addPixmap (pm1);
-}
-
 MainWindow::~MainWindow ()
 {
     delete ui;
 }
-void MainWindow::currentRowChanged (const QModelIndex& current, const QModelIndex&)
-{
-    //    ui->graphicsView_3->scene ()->clear ();
-    //qDebug()<<"rowCh "<< current.row ()<<"\n";
-    //    QPixmap mp = (qobject_cast<TableModel*> (ui->tableView->model ()))->getData (current.row ());
-    //    selectedPixmap = mp;
-    //    if (mp.isNull ())
-    //        return;
-    //    QPixmap m =
-    //    QPixmap::fromImage (mp.toImage ().convertToFormat (QImage::Format_Grayscale8, Qt::AvoidDither));
 
-    //    int width = m.width ();
-    //    int height = m.height ();
-    //    QPixmap pm1 = m.scaled (width * 10, height * 10, Qt::KeepAspectRatio);
-    //    QPainter pa1 (&pm1);
-    //    pa1.setPen (Qt::gray);
-    //    for (int n = 0; n <= width * 10; n += 10)
-    //        pa1.drawLine (n, 0, n, height * 10);
-    //    for (int n = 0; n <= height * 10; n += 10)
-    //        pa1.drawLine (0, n, width * 10, n);
-    //    ui->graphicsView_3->scene ()->addPixmap (pm1);
+void MainWindow::prepareCodeNumbersList (QStandardItemModel* listModel)
+{
+    listModel->setItem (CodeNumbers::LatinLetters, createCodeListItem ("[A-z]"));
+    listModel->setItem (CodeNumbers::CyrillicLetters, createCodeListItem ("[А-я]"));
+    listModel->setItem (CodeNumbers::Numbers, createCodeListItem ("[0-9]"));
+    listModel->setItem (CodeNumbers::LatinSupplement,
+                        createCodeListItem (m_codeNumbers[CodeNumbers::LatinSupplement]));
+    listModel->setItem (CodeNumbers::Arrows, createCodeListItem ("Arrows"));
+    listModel->setItem (CodeNumbers::BoxDrawing, createCodeListItem ("Box drawing", Qt::Unchecked));
+    listModel->setItem (CodeNumbers::BlockElements, createCodeListItem ("Block elements", Qt::Unchecked));
+    listModel->setItem (CodeNumbers::GeometricShapes, createCodeListItem ("Geometric shapes", Qt::Unchecked));
+    listModel->setItem (CodeNumbers::MiscellanepousSymbols,
+                        createCodeListItem ("Miscellanepous symbols", Qt::Unchecked));
 }
 
-
-void MainWindow::_mouseMoveEvent (QMouseEvent* event)
+QStandardItem* MainWindow::createCodeListItem (QString text, Qt::CheckState state)
 {
-    QPixmap pixmap (10, 10);
+    QStandardItem* listItem = new QStandardItem (text);
+    listItem->setCheckable (true);
+    listItem->setData (Qt::Unchecked, Qt::CheckStateRole);
+    listItem->setCheckState (state);
+    return listItem;
+}
+
+void MainWindow::tableSelection (const QItemSelection& selected, const QItemSelection& deselected)
+{
+    ui->graphicsView_3->scene ()->clear ();
+
+    int row;
+    if (!selected.isEmpty ())
+        row = selected.indexes ()[0].row ();
+    else if (!deselected.isEmpty ())
+        row = deselected.indexes ()[0].row ();
+    else
+        return;
+
+    QPixmap pixmap = ui->tableView->model ()->charPixmap (row);
+    selectedPixmap = pixmap;
+    if (pixmap.isNull ())
+        return;
+    pixmap = QPixmap::fromImage (pixmap.toImage ().convertToFormat (QImage::Format_Grayscale8, Qt::AvoidDither));
+
+    int width = pixmap.width ();
+    int height = pixmap.height ();
+    pixmap = pixmap.scaled (width * 10, height * 10, Qt::KeepAspectRatio);
     QPainter painter (&pixmap);
-    painter.fillRect (0, 0, 10, 10, Qt::white);
-    ui->graphicsView->render (&painter, QRectF (0, 0, 10, 10), QRect (event->pos (), QSize (10, 10)));
-    //QGraphicsItem *item =    graphicsView->itemAt( event->pos());
-    // pa->drawText(0,0,"dsfs");
-    QImage im = pixmap.toImage (); //.convertToFormat (QImage::Format_Grayscale8, Qt::AvoidDither);
+    painter.setPen (Qt::gray);
 
-    //ui->graphicsView_2->scene()->addPixmap( pixmap);
-    ui->graphicsView_2->scene ()->addPixmap (QPixmap::fromImage (im));
+    for (int n = 10; n < width * 10; n += 10)
+        painter.drawLine (n, 0, n, height * 10);
+    for (int n = 10; n < height * 10; n += 10)
+        painter.drawLine (0, n, width * 10, n);
+
+    ui->graphicsView_3->scene ()->addPixmap (pixmap);
 }
 
-void MainWindow::released ()
+void MainWindow::selectFont ()
 {
+    QFont::StyleStrategy styleStrategy = m_font.styleStrategy ();
     bool ok;
-    _font = QFontDialog::getFont (&ok, _font, this);
+    m_font = QFontDialog::getFont (&ok, m_font, this);
+    m_font.setStyleStrategy (styleStrategy);
     if (ok)
-        prepareTable (_font);
+        prepareTable (m_font);
 }
 
 void MainWindow::prepareTable (QFont& font)
 {
-    qDebug () << "prepare";
-    QItemSelectionModel* select = ui->tableView->selectionModel ();
-    QModelIndex in; //= select->selectedRows ()[0];
-    int rr = -1;
-    if (select->hasSelection ())
-    {
-        /*   QModelIndex */ in = select->selectedRows ()[0];
-        rr = in.row ();
-        qDebug () << rr << " " << select->selection () << "\n";
-        //emit select->select(select->selection(), QItemSelectionModel::ToggleCurrent);
-        //emit ui->tableView->selectRow (rr+1);
-        //QModelIndex in1 = ui->tableView->model()->index(0, 0, QModelIndex());
-        //QModelIndex in2 = ui->tableView->model()->index(ui->tableView->model()->rowCount() ,0, QModelIndex());
-        //ui->tableView->selectAll();//model()-> updateViews( in1, in2 );
-        ui->graphicsView_3->scene ()->clear ();
-    }
-    //ui->tableView->selectAll ();
-    /*    qDebug () << "Font: " << font.family () << " weigth:" << font.weight ()
-              << "   Point size:" << font.pointSize () << "  stretch:" << font.stretch ()
-              << "  wordSpacing:" << font.wordSpacing ();*/
+    QModelIndexList selections = ui->listView->selectionModel ()->selectedRows ();
+    if (selections.size () == 0)
+        return;
 
-    QFontMetrics fm (font);
-    //qDebug () << "height:" << fm.height () << "  width:" << fm.width ("H");
-
-    textItem->setFont (font);
     fontName->setText (font.family ());
     fontSize->setText (QString ("%1").arg (font.pointSize ()));
+    ui->plainTextEdit->setFont (font);
 
-    QTextCodec* codec = QTextCodec::codecForName ("Windows-1251");
-    int maxWidth = 0;
-    for (uchar i = 0; i < 255; i++)
+    QFontMetrics fm (font);
+    int height = fm.height ();
+
+
+    int rowCount = 0;
+    foreach (QModelIndex sel, selections)
     {
-        char ascii[1] = { (char)i };
-        QChar ch = codec->toUnicode (ascii)[0];
-        int width = fm.width (ch);
-        int height = fm.height ();
-        maxWidth = qMax (maxWidth, width);
+        int row = sel.row ();
+        ui->tableView->setRowCount (rowCount + m_codeNumbers[row].size ());
+        for (const QChar* _char = m_codeNumbers[row].constData (); !_char->isNull (); ++_char)
+        {
+            int width = fm.width (*_char);
 
-        QPixmap pm (width, height);
-        QPainter pa (&pm);
-        pa.setFont (font);
-        pa.fillRect (0, 0, width, height, Qt::white);
-        pa.drawStaticText (0, 0, QStaticText (codec->toUnicode (ascii)));
-        /*
-        QPixmap pm1 = pm.scaled (width * 10, height * 10, Qt::KeepAspectRatio);
-        QPainter pa1 (&pm1);
-        // pa1.setBrush(Qt::CrossPattern);
-        //pa1.drawRect(0, 0, width*10, height*10);
-        pa1.setPen (Qt::gray);
-        for (int n = 0; n <= width * 10; n += 10)
-            pa1.drawLine (n, 0, n, height * 10);
-        for (int n = 0; n <= height * 10; n += 10)
-            pa1.drawLine (0, n, width * 10, n);
-        ui->tableView->setRowHeight (i, height * 10 + 10);*/
-        ui->tableView->setItem (i, new TableItem (i, pm));
+            QPixmap pixmap (width, height);
+            QPainter painter (&pixmap);
+            painter.setFont (font);
+            painter.fillRect (0, 0, width, height, Qt::white);
+            painter.drawStaticText (0, 0, QStaticText (*_char));
+            ui->tableView->setItem (rowCount++, new TableItem (_char->unicode (), pixmap));
+        }
     }
-
-    //ui->tableView->setColumnWidth (2, maxWidth * 10 + 10);
     ui->tableView->resizeColumnsToContents ();
     ui->tableView->resizeRowsToContents ();
 
-    ui->plainTextEdit->setFont (font);
-    emit select->select (select->selection (), QItemSelectionModel::Deselect);
-    if (rr != -1)
-    {
-        // select->select(in, QItemSelectionModel::Rows);
-        emit ui->tableView->selectRow (rr);
-        //  qDebug () << "selected " << rr;
-        emit select->select (select->selection (), QItemSelectionModel::Select);
-    }
-}
 
-void MainWindow::changeEvent (QEvent* e)
-{
+    QItemSelectionModel* selModel = ui->tableView->selectionModel ();
+    if (!selModel->hasSelection ())
+        return;
 
-    QMainWindow::changeEvent (e);
-    switch (e->type ())
-    {
-    case QEvent::LanguageChange:
-        ui->retranslateUi (this);
-        break;
-    default:
-        break;
-    }
+    ui->graphicsView_3->scene ()->clear ();
+
+    int row = selModel->selectedRows ()[0].row ();
+    emit selModel->select (selModel->selection (), QItemSelectionModel::Deselect);
+    emit ui->tableView->selectRow (row);
 }
 
 
@@ -270,9 +240,9 @@ void MainWindow::createToolBar ()
 
 void MainWindow::createStatusBar ()
 {
-    QLabel* label = new QLabel ("Font name: ");
-    label->setAlignment (Qt::AlignLeading);
-    statusBar ()->addWidget (label);
+    QLabel* lb = new QLabel ("Font name: ");
+    lb->setAlignment (Qt::AlignLeading);
+    statusBar ()->addWidget (lb);
     fontName = new QLabel ();
     statusBar ()->addWidget (fontName);
 
@@ -281,9 +251,9 @@ void MainWindow::createStatusBar ()
     line->setFrameShadow (QFrame::Sunken);
     statusBar ()->addWidget (line);
 
-    label = new QLabel ("Font size: ");
-    label->setAlignment (Qt::AlignLeading);
-    statusBar ()->addWidget (label);
+    lb = new QLabel ("Font size: ");
+    lb->setAlignment (Qt::AlignLeading);
+    statusBar ()->addWidget (lb);
     fontSize = new QLabel ();
     statusBar ()->addWidget (fontSize);
 
@@ -305,8 +275,6 @@ void MainWindow::onExit ()
 
 void MainWindow::onExport ()
 {
-    qDebug ("onImport()");
-
     QImage image = selectedPixmap.toImage ().convertToFormat (QImage::Format_Grayscale8, Qt::AvoidDither);
     int height = image.height ();
     int width = image.width ();
@@ -314,25 +282,16 @@ void MainWindow::onExport ()
     for (int i = 0; i < height; i++)
     {
         QString k;
-        const uchar* n = image.constScanLine (i);
         for (int x = 0; x < width; x++)
         {
             QRgb px = image.pixel (x, i);
-
-            //          if (n[x]==255)
-            //if (qGray(px)==255)
             if (qGray (px) >= 178)
                 k.append ("  ");
             else
                 k.append ('#');
-
-            //            k.append(QString("%1 ").arg(qGray(px)));
-            // qDebug()<<n[x];
         }
-        // k.append("\r\n");
         qDebug () << k;
     }
-    // qDebug()<<k;
 }
 
 #define CBOX_CONNECT(chbox, slot) \
@@ -359,8 +318,8 @@ void MainWindow::createChBoxStyleStrategy ()
 }
 void MainWindow::setStyleStrategy (QFont::StyleStrategy styleStrategy)
 {
-    _font.setStyleStrategy ((QFont::StyleStrategy) (_font.styleStrategy () ^ styleStrategy));
-    prepareTable (_font);
+    m_font.setStyleStrategy ((QFont::StyleStrategy) (m_font.styleStrategy () ^ styleStrategy));
+    prepareTable (m_font);
 }
 
 void MainWindow::onPreferOutline (int)
@@ -431,4 +390,18 @@ void MainWindow::onForceIntegerMetrics (bool)
         ui->preferMatch->setChecked (false);
     }
     setStyleStrategy (QFont::ForceIntegerMetrics);
+}
+
+
+void MainWindow::changeEvent (QEvent* e)
+{
+    QMainWindow::changeEvent (e);
+    switch (e->type ())
+    {
+    case QEvent::LanguageChange:
+        ui->retranslateUi (this);
+        break;
+    default:
+        break;
+    }
 }

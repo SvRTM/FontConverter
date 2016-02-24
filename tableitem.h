@@ -4,22 +4,22 @@
 #include <QVariant>
 #include <QPixmap>
 
-class TableItem
+class TableItem final
 {
     public:
-    TableItem (short num, QPixmap data);
+    explicit TableItem (ushort numericUnicode, QPixmap charPixmap);
 
     public:
-    void setNumber (QVariant num);
-    QVariant number ();
+    void setNumericUnicode (QVariant numericUnicode);
+    QVariant numericUnicode ();
 
-    void setSymbolImage (QVariant image);
-    QVariant symbolImage ();
-    QVariant scaleSymbolImage ();
+    void setCharPixmap (QVariant charPixmap);
+    QVariant charPixmap ();
+    QVariant scaleCharPixmap ();
 
     private:
-    short num;
-    QPixmap data;
+    short m_numericUnicode;
+    QPixmap m_charPixmap;
 };
 
 #endif // TABLEITEM_H

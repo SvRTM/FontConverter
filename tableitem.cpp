@@ -1,40 +1,42 @@
 #include "tableitem.h"
-#include <QPixmap>
 #include <QPainter>
 
-TableItem::TableItem (short number, QPixmap data)
+TableItem::TableItem (ushort numericUnicode, QPixmap charPixmap)
 {
-    this->num = number;
-    this->data = data;
+    this->m_numericUnicode = numericUnicode;
+    this->m_charPixmap = charPixmap;
 }
 
-void TableItem::setNumber (QVariant number)
+void TableItem::setNumericUnicode (QVariant numericUnicode)
 {
-    this->num = number.toInt ();
-}
-QVariant TableItem::number ()
-{
-    return num;
+    this->m_numericUnicode = numericUnicode.toInt ();
 }
 
-void TableItem::setSymbolImage (QVariant image)
+QVariant TableItem::numericUnicode ()
 {
-    data = image.value<QPixmap> ();
+    return m_numericUnicode;
 }
-QVariant TableItem::symbolImage ()
+
+void TableItem::setCharPixmap (QVariant charPixmap)
 {
-    return data ;
+    m_charPixmap = charPixmap.value<QPixmap> ();
 }
-QVariant TableItem::scaleSymbolImage ()
+
+QVariant TableItem::charPixmap ()
 {
-    int width = data.width ();
-    int height = data.height ();
-    QPixmap pixmap = data.scaled (width * 10, height * 10, Qt::KeepAspectRatio);
+    return m_charPixmap;
+}
+
+QVariant TableItem::scaleCharPixmap ()
+{
+    int width = m_charPixmap.width ();
+    int height = m_charPixmap.height ();
+    QPixmap pixmap = m_charPixmap.scaled (width * 10, height * 10, Qt::KeepAspectRatio);
     QPainter painter (&pixmap);
     painter.setPen (Qt::gray);
-    for (int n = 0; n <= width * 10; n += 10)
+    for (int n = 10; n < width * 10; n += 10)
         painter.drawLine (n, 0, n, height * 10);
-    for (int n = 0; n <= height * 10; n += 10)
+    for (int n = 10; n < height * 10; n += 10)
         painter.drawLine (0, n, width * 10, n);
     return pixmap;
 }

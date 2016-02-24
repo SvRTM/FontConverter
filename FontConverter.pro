@@ -14,13 +14,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    graphicsview.cpp \
     tablemodel.cpp \
     tableitem.cpp \
     tableview.cpp
 
 HEADERS  += mainwindow.h \
-    graphicsview.h \
     tablemodel.h \
     tableitem.h \
     tableview.h
