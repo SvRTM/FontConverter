@@ -9,22 +9,21 @@
 
 class TableView final : public QTableView
 {
-    Q_OBJECT
+        Q_OBJECT
 
     public:
-    explicit TableView (QWidget* parent = 0);
-    virtual ~TableView ()
-    {
-    }
+        explicit TableView(QWidget *parent = 0);
+        virtual ~TableView() {}
 
     public:
-    void setItem (int row, TableItem* item);
-    void setRowCount (int n);
+        void setItem(int row, TableItem *item);
+        void setRowCount(int n);
+        QList<TableItem *> items() const;
 
-    inline TableModel* model ()
-    {
-        return (qobject_cast<TableModel*> (QTableView::model ()));
-    }
+        inline TableModel *model() const
+        {
+            return (qobject_cast<TableModel *>(QTableView::model()));
+        }
 };
 
 #endif // TABLEVIEW_H
