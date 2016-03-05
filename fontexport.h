@@ -61,12 +61,13 @@ class IFontExport
 
     public:
         explicit IFontExport(const QList<TableItem *> &items);
-        virtual ~IFontExport(){}
+        virtual ~IFontExport() {}
 
         QString process();
 
     private:
-        virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image, QTextStream &bitmaps) = 0;
+        virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
+                                                  QTextStream &bitmaps) = 0;
 
         void prepareCharInfo(const QChar ch, const CHAR_INFO &smb, QTextStream &stream)
         {
@@ -98,8 +99,13 @@ class BitColor final : public IFontExport
         quint8 lastRow(const QImage &image, QBitArray &bits, bool &empty);
 
         QString toString(const QBitArray &bit, QTextStream &stream);
+        quint8 sizeInByte(const QBitArray &bit)
+        {
+            return bit.size() / 8 + (bit.size() % 8 ? 1 : 0);
+        }
+
         virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
-                                        QTextStream &bitmaps) override;
+                                                  QTextStream &bitmaps) override;
 };
 
 #endif // FONTEXPORT_H

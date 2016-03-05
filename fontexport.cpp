@@ -137,12 +137,14 @@ IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
 {
     bool isEmpty;
 
+    quint16 size = 0;
+
     QBitArray fbits;
     quint8 fstRow = firstRow(image, fbits, isEmpty);
     if (!isEmpty)
     {
         bitmaps << "    /* " << toString(fbits, bitmaps) << "*/";
-        sizeBitmap += fbits.size() / 8;
+        size += sizeInByte(fbits);
     }
     bool latch = isEmpty;
 
@@ -156,7 +158,7 @@ IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
         else
             latch = false;
         bitmaps << "    /* " << toString(bit, bitmaps) << "*/";
-        sizeBitmap += bit.size() / 8;
+        size += sizeInByte(bit);
     }
 
     if ( !isEmpty )
@@ -164,9 +166,13 @@ IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
         if (!latch)
             bitmaps << ',' << endl;
         bitmaps << "    /* " << toString(lbits, bitmaps) << "*/";
-        sizeBitmap += lbits.size() / 8;
+        size += sizeInByte(lbits);
     }
 
-    positionInBitmap += lstRow - fstRow + 1;
-    return { fstRow, lstRow, static_cast<const quint8>(image.width()),  positionInBitmap };
+    sizeBitmap += size;
+
+    CHAR_INFO charInfo = { fstRow, lstRow, static_cast<const quint8>(image.width()),  positionInBitmap };
+    positionInBitmap += size;
+
+    return charInfo;
 }
