@@ -60,7 +60,7 @@ class IFontExport
         };
 
     public:
-        explicit IFontExport(const QList<TableItem *> &items);
+        explicit IFontExport(QList<TableItem *> items);
         virtual ~IFontExport() {}
 
         QString process();
@@ -72,12 +72,12 @@ class IFontExport
         void prepareCharInfo(const QChar ch, const CHAR_INFO &smb, QTextStream &stream)
         {
             stream << '{' << smb.fstRow << ", " << smb.lstRow << ", " << smb.width << ", "
-                   << smb.position << "}\t// '" << ch << '\'';
+                   << smb.position << "}        \t// '" << ch << '\'';
         }
 
 
     protected:
-        const QList<TableItem *> *items;
+        QList<TableItem *> items;
         QImage::Format format;
 
         quint16 positionInBitmap;
@@ -87,7 +87,7 @@ class IFontExport
 class BitColor final : public IFontExport
 {
     public:
-        explicit BitColor(const QList<TableItem *> &items) : IFontExport(items)
+        explicit BitColor(QList<TableItem *> items) : IFontExport(items)
         {
             format = QImage::Format_Mono;
         }
@@ -95,7 +95,7 @@ class BitColor final : public IFontExport
     private:
         QBitArray scanLine(const quint8 index, const QImage &image) const;
 
-        quint8 firstRow(const QImage &image, QBitArray &bits, bool &empty);
+        quint8 firstRow(const QImage &image, QBitArray &bits);
         quint8 lastRow(const QImage &image, QBitArray &bits, bool &empty);
 
         QString toString(const QBitArray &bit, QTextStream &stream);

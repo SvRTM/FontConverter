@@ -1,9 +1,10 @@
 #include "fontexport.h"
 
+#include <algorithm>
 
-IFontExport::IFontExport(const QList<TableItem *> &items)
+IFontExport::IFontExport(QList<TableItem *> items)
 {
-    this->items = &items;
+    this->items = items;
     positionInBitmap = 0;
     sizeBitmap = 0;
 }
@@ -13,10 +14,13 @@ QString IFontExport::process()
     QString strBitmap, strSymbol;
     QTextStream streamBitmap(&strBitmap), streamSymbol(&strSymbol);
 
+    std::sort(items.begin(), items.end(), [] (const TableItem * a,
+                                              const TableItem * b) -> bool {return a->numUnicode() < b->numUnicode();});
+
     quint8 height = 0;
     quint16 fstSymbol = 0;
     bool latch = false;
-    foreach (TableItem * item, *items)
+    foreach (TableItem * item, items)
     {
         QPixmap pixmap = item->charPixmap().value<QPixmap>();
         QImage image = pixmap.toImage().convertToFormat(format, Qt::AvoidDither);
@@ -30,7 +34,7 @@ QString IFontExport::process()
         }
         CHAR_INFO smb = prepareBitmaps_CharInfo(image, streamBitmap);
         if (latch)
-            streamSymbol << endl << ',';
+            streamSymbol << endl << "            ,";
 
         prepareCharInfo(item->numericUnicode().toChar(), smb, streamSymbol);
         latch = true;
@@ -47,13 +51,13 @@ QString IFontExport::process()
                           "        const __uint8_t   width;\n"
                           "        const __uint16_t position;\n"
                           "    } descriptors[%3] = {\n"
-                          " %4\n"
+                          "             %4\n"
                           "       };\n"
                           "    const __uint8_t bitmaps[%5] = {\n"
                           "%6\n"
                           "    };\n"
                           "};";
-    return oneBitColor.arg(height).arg(fstSymbol).arg(items->size()).arg(strSymbol)
+    return oneBitColor.arg(height).arg(fstSymbol).arg(items.size()).arg(strSymbol)
            .arg(sizeBitmap).arg(strBitmap);
 }
 
@@ -71,7 +75,7 @@ QBitArray BitColor::scanLine(const quint8 index, const QImage &image) const
     return bits;
 }
 
-quint8 BitColor::firstRow(const QImage &image, QBitArray &bits, bool &empty)
+quint8 BitColor::firstRow(const QImage &image, QBitArray &bits)
 {
     const QBitArray EMPTY_LINE(image.width(), true);
 
@@ -81,15 +85,11 @@ quint8 BitColor::firstRow(const QImage &image, QBitArray &bits, bool &empty)
     {
         bits = scanLine(fstRow, image);
         if (bits != EMPTY_LINE)
-        {
-            empty = false;
-            return fstRow;
-        }
+            break;
         fstRow++;
     }
     while ( fstRow != height );
 
-    empty = true;
     return fstRow;
 }
 
@@ -120,7 +120,7 @@ QString BitColor::toString(const QBitArray &bit, QTextStream &stream)
         return nullptr;
 
     QByteArray x;
-    stream << "0b";
+    stream << "        0b";
     for (int i = 0; i < bit.size(); i++)
     {
         if (i != 0 && i % 8 == 0)
@@ -135,19 +135,16 @@ QString BitColor::toString(const QBitArray &bit, QTextStream &stream)
 IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
                                                          QTextStream &bitmaps)
 {
-    bool isEmpty;
 
     quint16 size = 0;
 
     QBitArray fbits;
-    quint8 fstRow = firstRow(image, fbits, isEmpty);
-    if (!isEmpty)
-    {
-        bitmaps << "    /* " << toString(fbits, bitmaps) << "*/";
-        size += sizeInByte(fbits);
-    }
-    bool latch = isEmpty;
+    quint8 fstRow = firstRow(image, fbits);
+    bitmaps << "    /* " << toString(fbits, bitmaps) << "*/";
+    size += sizeInByte(fbits);
 
+    bool latch = false;
+    bool isEmpty;
     QBitArray lbits;
     quint8 lstRow = lastRow(image, lbits, isEmpty);
     for (quint8 i = fstRow + 1; i < lstRow; i++)

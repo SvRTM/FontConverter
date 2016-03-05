@@ -18,6 +18,11 @@ class TableItem final
         QVariant charPixmap();
         QVariant scaleCharPixmap();
 
+        quint16 numUnicode() const
+        {
+            return m_numericUnicode;
+        }
+
     private:
         quint16 m_numericUnicode;
         QPixmap m_charPixmap;
