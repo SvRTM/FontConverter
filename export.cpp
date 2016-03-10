@@ -4,7 +4,7 @@
 #include "ui_export.h"
 
 
-Export::Export(const QList<TableItem *> &items, QWidget *parent)
+Export::Export(const int depth, const QList<TableItem *> &items, QWidget *parent)
     : QDialog(parent), ui(new Ui::Export)
 {
     ui->setupUi (this);
@@ -12,7 +12,11 @@ Export::Export(const QList<TableItem *> &items, QWidget *parent)
     connect(ui->cancel,  &QPushButton::clicked, this,  &Export::reject);
     connect(ui->save, &QPushButton::clicked, this, &Export::save);
 
-    IFontExport *exp = new BitColor(items);
+    IFontExport *exp;
+    if (depth == 1)
+        exp = new BitColor(items);
+    else
+        exp = new GrayscaleColor(items);
     QString str = exp->process();
     ui->plainTextEdit->setPlainText(str);
 

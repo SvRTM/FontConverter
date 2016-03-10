@@ -15,7 +15,7 @@ class Export : public QDialog
         Q_OBJECT
 
     public:
-        explicit Export(const QList<TableItem *> &items, QWidget *parent);
+        explicit Export(const int depth, const QList<TableItem *> &items, QWidget *parent);
         virtual ~Export();
 
     private:

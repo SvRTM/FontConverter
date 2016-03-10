@@ -22,21 +22,23 @@ CodeNumbers::CodeNumbers ()
                                   "жзийклмнопрстуфхцчшщъыьэюя" /* [1072 - 1103] */
                                   "ё" /* [1105] */;
 
-    operator[](Numbers) = "0123456789";               /* [48 - 57] */
-    operator[](LatinSupplement) = " !\"#$%&'()*+,-./" /* [32 - 47] */
-                                  ":;<=>?@"           /* [58 - 64] */
-                                  "[\\]^_`"           /* [91 - 96] */
-                                  "{|}~" /* [123 - 126] */;
+    operator[](Numbers) = "0123456789";                      /* [48 - 57] */
+    operator[](LatinSupplement) = " !\"#$%&'()*+,-./"        /* [32 - 47] */
+                                  ":;<=>?@"                                 /* [58 - 64] */
+                                  "[\\]^_`"                                     /* [91 - 96] */
+                                  "{|}~"                                         /* [123 - 126] */;
 
-    operator[](Arrows) = "←↑→↓↔↕" /* [8592 - 8597] */ "↵" /* [8629] */
-                         "⇐⇑⇒⇓⇔"; /* [8656 - 8660] */
+    operator[](Arrows) = "←↑→↓↔↕"   /* [8592 - 8597] */
+                         "↵"                      /* [8629] */
+                         "⇐⇑⇒⇓⇔";            /* [8656 - 8660] */
     operator[](BoxDrawing) =
-        "─│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬"; /* [9472,9474,9484,9488,9492,9496,9500,9508,9516,9524,9532,9552 - 9580] */
-    operator[](BlockElements) = "▀▄█▌▐░▒▓"; /* [ 9616 - 9619 */
+        "─│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬";     /* [9472,9474,9484,9488,9492,9496,9500,9508,9516,9524,9532,9552 - 9580] */
+    operator[](BlockElements) =
+        "▀▄█▌▐░▒▓";                     /* [ 9616 - 9619 */
     operator[](GeometricShapes) =
-        "■▪▫▲►▼◄◊○●"; /* [9632,9642,9643,9650,9658,9660,9668,9674,9675,9679] */
+        "■▪▫▲►▼◄◊○●";                   /* [9632,9642,9643,9650,9658,9660,9668,9674,9675,9679] */
     operator[](MiscellanepousSymbols) =
-        "♠♣♥♦♀♂"; /* [9824,9827,9829,9830,9792,9794 ] */
+        "♠♣♥♦♀♂";                        /* [9824,9827,9829,9830,9792,9794 ] */
 }
 
 
@@ -60,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     QItemSelectionModel *selectionModel = new QItemSelectionModel(model);
     ui->tableView->setSelectionModel(selectionModel);
     connect(selectionModel, &QItemSelectionModel::selectionChanged, this,
-             &MainWindow::tableSelection);
+            &MainWindow::tableSelection);
 
 
     ui->graphicsView_3->setScene(new QGraphicsScene(this));
@@ -78,9 +80,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
         const QModelIndex index = listModel->indexFromItem(item);
         QItemSelectionModel *selModel = pListView->selectionModel();
         selModel->select(QItemSelection(index, index),
-                          item->checkState () == Qt::Checked ?
-                          QItemSelectionModel::Select :
-                          QItemSelectionModel::Deselect);
+                         item->checkState () == Qt::Checked ?
+                         QItemSelectionModel::Select :
+                         QItemSelectionModel::Deselect);
     });
     connect (ui->listView->selectionModel(),
              &QItemSelectionModel::selectionChanged,
@@ -93,24 +95,24 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     });
     prepareCodeNumbersList(listModel);
 
-/*
-    QFontMetrics fm(font());
-    int height = fm.height();
-    int rowCount = 0;
-    ui->tableView->setRowCount(9999 - 9472 + 1);
-    for (int i = 9472; i < 9999; i++)
-    {
-        QChar c (i);
-        int width = fm.width(c);
+    /*
+        QFontMetrics fm(font());
+        int height = fm.height();
+        int rowCount = 0;
+        ui->tableView->setRowCount(9999 - 9472 + 1);
+        for (int i = 9472; i < 9999; i++)
+        {
+            QChar c (i);
+            int width = fm.width(c);
 
-        QPixmap pixmap(width, height);
-        QPainter painter(&pixmap);
-        painter.fillRect(0, 0, width, height, Qt::white);
-        painter.drawStaticText(0, 0, QStaticText (c));
-        ui->tableView->setItem(rowCount++, new TableItem(c.unicode (), pixmap));
-    }
-    ui->tableView->resizeColumnsToContents();
-    ui->tableView->resizeRowsToContents();*/
+            QPixmap pixmap(width, height);
+            QPainter painter(&pixmap);
+            painter.fillRect(0, 0, width, height, Qt::white);
+            painter.drawStaticText(0, 0, QStaticText (c));
+            ui->tableView->setItem(rowCount++, new TableItem(c.unicode (), pixmap));
+        }
+        ui->tableView->resizeColumnsToContents();
+        ui->tableView->resizeRowsToContents();*/
 }
 MainWindow::~MainWindow ()
 {
@@ -121,23 +123,23 @@ void MainWindow::prepareCodeNumbersList(QStandardItemModel *listModel)
 {
     listModel->setItem(CodeNumbers::LatinLetters, createCodeListItem("[A-z]"));
     listModel->setItem(CodeNumbers::CyrillicLetters,
-                        createCodeListItem("[А-я]"));
+                       createCodeListItem("[А-я]"));
     listModel->setItem(CodeNumbers::Numbers, createCodeListItem("[0-9]"));
     listModel->setItem(CodeNumbers::LatinSupplement,
-                        createCodeListItem(m_codeNumbers[CodeNumbers::LatinSupplement]));
+                       createCodeListItem(m_codeNumbers[CodeNumbers::LatinSupplement]));
     listModel->setItem(CodeNumbers::Arrows, createCodeListItem("Arrows"));
     listModel->setItem(CodeNumbers::BoxDrawing, createCodeListItem("Box drawing",
-                                                                     Qt::Unchecked));
+                                                                   Qt::Unchecked));
     listModel->setItem(CodeNumbers::BlockElements,
-                        createCodeListItem("Block elements", Qt::Unchecked));
+                       createCodeListItem("Block elements", Qt::Unchecked));
     listModel->setItem(CodeNumbers::GeometricShapes,
-                        createCodeListItem("Geometric shapes", Qt::Unchecked));
+                       createCodeListItem("Geometric shapes", Qt::Unchecked));
     listModel->setItem(CodeNumbers::MiscellanepousSymbols,
-                        createCodeListItem("Miscellanepous symbols", Qt::Unchecked));
+                       createCodeListItem("Miscellanepous symbols", Qt::Unchecked));
 }
 
 QStandardItem *MainWindow::createCodeListItem(QString text,
-                                               Qt::CheckState state)
+                                              Qt::CheckState state)
 {
     QStandardItem *listItem = new QStandardItem(text);
     listItem->setCheckable(true);
@@ -147,7 +149,7 @@ QStandardItem *MainWindow::createCodeListItem(QString text,
 }
 
 void MainWindow::tableSelection(const QItemSelection &selected,
-                                 const QItemSelection &deselected)
+                                const QItemSelection &deselected)
 {
     ui->graphicsView_3->scene()->clear();
 
@@ -169,7 +171,7 @@ void MainWindow::tableSelection(const QItemSelection &selected,
         format = QImage::Format_Mono;
 
     pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format,
-                                                                    Qt::AvoidDither));
+                                                                 Qt::AvoidDither));
 
     int width = pixmap.width();
     int height = pixmap.height();
@@ -266,7 +268,7 @@ QAction *MainWindow::createAction (QString iconPath, QString name,
 void MainWindow::createActions()
 {
     importAction = createAction("open.png", "&Import a font", "Ctrl+I",
-                                 "Import a font");
+                                "Import a font");
     exitAction = createAction("E&xit", "Ctrl+Q", "Exit program");
 
     A_CONNECT(importAction, onImport);
@@ -328,37 +330,8 @@ void MainWindow::onExit()
 
 void MainWindow::onExport()
 {
-
-    QImage::Format format = QImage::Format_Grayscale8;
-    if (QFont::NoAntialias & m_font.styleStrategy())
-        format = QImage::Format_Mono;
-
-    ui->tableView->model();
-
-    QImage image = selectedPixmap.toImage().convertToFormat(format,
-                                                              Qt::AvoidDither);
-    qDebug() << "Depth:" << image.depth();
-    int height = image.height();
-    int width = image.width();
-
-    for (int i = 0; i < height; i++)
-    {
-        QString k;
-        for (int x = 0; x < width; x++)
-        {
-            QRgb px = image.pixel(x, i);
-            if (qGray(px) >= 178)
-                k.append("  ");
-            else
-                k.append('#');
-        }
-        qDebug() << k;
-    }
-
-    if (image.depth() != 1)
-        return;
-
-    Export exp(ui->tableView->items(), this);
+    int depth = m_font.styleStrategy() &QFont::NoAntialias ? 1 :8;
+    Export exp(depth, ui->tableView->items(), this);
     exp.exec();
 }
 
@@ -388,7 +361,7 @@ void MainWindow::createChBoxStyleStrategy()
 void MainWindow::setStyleStrategy(QFont::StyleStrategy styleStrategy)
 {
     m_font.setStyleStrategy((QFont::StyleStrategy) (m_font.styleStrategy() ^
-                                                     styleStrategy));
+                                                    styleStrategy));
     prepareTable(m_font);
 }
 
