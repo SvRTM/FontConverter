@@ -1,7 +1,7 @@
 #include "fontexport.h"
 #include <algorithm>
 
-IFontExport::IFontExport(QList<TableItem *> items)
+IFontExport::IFontExport(QList<SymbolTableItem *> items)
 {
     this->items = items;
     positionInBitmap = 0;
@@ -14,19 +14,22 @@ QString IFontExport::process()
     QTextStream streamBitmap(&strBitmap), streamSymbol(&strSymbol),
                 streamBlock(&strBlock);
 
-    std::sort(items.begin(), items.end(), [] (const TableItem * a,
-                                              const TableItem * b) -> bool {return a->numUnicode() < b->numUnicode();});
+    std::sort(items.begin(), items.end(), [] (const SymbolTableItem * a,
+                                              const SymbolTableItem * b) -> bool
+    {
+        return a->numericUnicode() < b->numericUnicode();
+    });
 
     quint8 height;
-    quint16 startChar, prevChar, nDescriptor = 0, sizeBlocks = 0;
+    quint16 startChar = 0, prevChar = 0, nDescriptor = 0, sizeBlocks = 0;
     bool latch = false;
     for (int n = 0; n < items.size(); n++)
     {
-        TableItem *item = items[n];
+        SymbolTableItem *item = items[n];
         QPixmap pixmap = item->charPixmap().value<QPixmap>();
         QImage image = pixmap.toImage().convertToFormat(format, Qt::AvoidDither);
 
-        quint16 currChar = item->numUnicode();
+        quint16 currChar = item->numericUnicode();
 
         if (latch)
         {
@@ -61,11 +64,11 @@ QString IFontExport::process()
                           "    const struct CHAR_INFO\n"
                           "    {\n"
                           "        const uint8_t   fstRow;\n"
-                          "        const uint8_t   lstRow;\n"
+                          "        const uint8_t   sizeRow;\n"
                           "        const uint8_t   width;\n"
-                          "        const uint16_t position;\n"
-                          "    } descriptors[%2] = {\n"
-                          "             %3\n"
+                          "        const %2 position;\n"
+                          "    } descriptors[%3] = {\n"
+                          "             %4\n"
                           "       };\n"
                           "\n"
                           "    const struct BLOCK\n"
@@ -73,16 +76,16 @@ QString IFontExport::process()
                           "        const uint16_t    startChar;\n"
                           "        const uint16_t    endChar;\n"
                           "        const CHAR_INFO *descriptors;\n"
-                          "    } blocks[%4] = {\n"
-                          "%5\n"
+                          "    } blocks[%5] = {\n"
+                          "%6\n"
                           "       };\n"
                           "\n"
-                          "    const uint8_t bitmaps[%6] = {\n"
-                          "%7\n"
+                          "    const uint8_t bitmaps[%7] = {\n"
+                          "%8\n"
                           "    };\n"
                           "};";
 
-    return oneBitColor.arg(height).arg(items.size()).arg(strSymbol)
+    return oneBitColor.arg(height).arg(size_t_PosBimap(sizeBitmap)).arg(items.size()).arg(strSymbol)
            .arg(sizeBlocks + 1).arg(strBlock)
            .arg(sizeBitmap).arg(strBitmap);
 }
@@ -193,7 +196,8 @@ IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
 
     sizeBitmap += size;
 
-    CHAR_INFO charInfo = { fstRow, lstRow, static_cast<const quint8>(image.width()),  positionInBitmap };
+    CHAR_INFO charInfo = { fstRow, static_cast<const quint8>(lstRow - fstRow + 1) ,
+                           static_cast<const quint8>(image.width()),  positionInBitmap };
     positionInBitmap += size;
 
     return charInfo;
@@ -315,7 +319,8 @@ IFontExport::CHAR_INFO GrayscaleColor::prepareBitmaps_CharInfo(
 
     sizeBitmap += size;
 
-    CHAR_INFO charInfo = { fstRow, lstRow, static_cast<const quint8>(image.width()),  positionInBitmap };
+    CHAR_INFO charInfo = { fstRow, static_cast<const quint8>(lstRow - fstRow + 1),
+                           static_cast<const quint8>(image.width()),  positionInBitmap };
     positionInBitmap += size;
 
     return charInfo;

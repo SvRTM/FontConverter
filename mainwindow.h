@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "tableitem.h"
+#include "symboltableitem.h"
 
 #include <QMainWindow>
 #include <QGraphicsSimpleTextItem>
@@ -23,7 +23,7 @@ namespace Ui
     class MainWindow;
 }
 
-struct CodeNumbers final : std::unordered_map<int, QString>
+struct CodeNumbers final : std::unordered_map<quint8, QString>
 {
     CodeNumbers();
     virtual ~CodeNumbers() {}
@@ -38,7 +38,8 @@ struct CodeNumbers final : std::unordered_map<int, QString>
         BoxDrawing,
         BlockElements,
         GeometricShapes,
-        MiscellanepousSymbols
+        MiscellanepousSymbols,
+        UnknownSymbol
     };
 };
 
@@ -47,7 +48,7 @@ class MainWindow : public QMainWindow
         Q_OBJECT
 
     public:
-        explicit MainWindow(QWidget *parent = 0);
+        explicit MainWindow(QWidget *parent = nullptr);
         virtual ~MainWindow();
 
     protected:
@@ -55,68 +56,42 @@ class MainWindow : public QMainWindow
 
     private:
         void prepareCodeNumbersList(QStandardItemModel *listModel);
-        QStandardItem *createCodeListItem(QString text,
-                                           Qt::CheckState state = Qt::Checked);
+        QStandardItem *createCodeListItem(QString txt, Qt::CheckState state = Qt::Checked);
 
-        QAction *createAction(QString name, QString shortcut, QString tip);
-        QAction *createAction(QString iconPath, QString name, QString shortcut,
-                               QString tip);
-
-        void createActions();
-        void createMenuBar();
         void createToolBar();
         void createStatusBar();
-        void createChBoxStyleStrategy();
 
         void prepareTable(QFont &font);
         void setStyleStrategy(QFont::StyleStrategy styleStrategy);
 
+        void disableAction(bool disable);
+        QFrame *separator()
+        {
+            QFrame *line = new QFrame(this);
+            line->setFrameShape(QFrame::VLine);
+            line->setFrameShadow(QFrame::Sunken);
+            return line;
+        }
 
     private slots:
-        void selectFont();
+        void tableSelection(const QItemSelection &selected, const QItemSelection &deselected);
 
-        void tableSelection(const QItemSelection &selected,
-                             const QItemSelection &deselected);
+        void on_actionImportFont_triggered();
+        void on_actionExportFontC_triggered();
+        void on_actionNoAntialias_triggered(bool e);
 
-        void onImport();
-        void onExit();
-        void onExport();
-
-        void onPreferOutline(int state);
-        void onPreferDevice(int state);
-        void onPreferBitmap(int state);
-        void onForceOutline(int state);
-        void onPreferDefault(int state);
-        void onPreferAntialias(int state);
-        void onNoSubpixelAntialias(int state);
-        void onNoAntialias(int state);
-        void onOpenGLCompatible(int state);
-        void onNoFontMerging(int state);
-
-        void onPreferMatch(bool checked);
-        void onPreferQuality(bool checked);
-        void onForceIntegerMetrics(bool checked);
-
+        void on_actionExit_triggered();
 
     private:
-        Ui::MainWindow *ui;
+        Ui::MainWindow *const ui;
 
         CodeNumbers m_codeNumbers;
 
-        QPixmap selectedPixmap;
-
         QFont m_font;
-        QLabel *fontName;
-        QLabel *fontSize;
 
-        QMenu *fileMenu;
-        QMenu *editMenu;
-        QToolBar *fileBar;
-        QToolBar *editBar;
-
-        QAction *importAction;
-        QAction *exitAction;
-        QAction *exportAction;
+        QLabel *sbFontName;
+        QLabel *sbFontSize;
+        QLabel *sbFontStyleStrategy;
 };
 
 #endif // MAINWINDOW_H

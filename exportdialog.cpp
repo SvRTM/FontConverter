@@ -1,16 +1,16 @@
-#include "export.h"
+#include "exportdialog.h"
 #include "fontexport.h"
 
 #include "ui_export.h"
 
 
-Export::Export(const int depth, const QList<TableItem *> &items, QWidget *parent)
+ExportDialog::ExportDialog(const int depth, const QList<SymbolTableItem *> &items, QWidget *parent)
     : QDialog(parent), ui(new Ui::Export)
 {
     ui->setupUi (this);
 
-    connect(ui->cancel,  &QPushButton::clicked, this,  &Export::reject);
-    connect(ui->save, &QPushButton::clicked, this, &Export::save);
+    connect(ui->cancel,  &QPushButton::clicked, this,  &ExportDialog::reject);
+    connect(ui->save, &QPushButton::clicked, this, &ExportDialog::save);
 
     IFontExport *exp;
     if (depth == 1)
@@ -22,12 +22,12 @@ Export::Export(const int depth, const QList<TableItem *> &items, QWidget *parent
 
     delete exp;
 }
-Export::~Export()
+ExportDialog::~ExportDialog()
 {
     delete ui;
 }
 
-void Export::changeEvent(QEvent *e)
+void ExportDialog::changeEvent(QEvent *e)
 {
     QDialog::changeEvent(e);
     switch(e->type ())
@@ -40,7 +40,7 @@ void Export::changeEvent(QEvent *e)
     }
 }
 
-void Export::save()
+void ExportDialog::save()
 {
 
 }

@@ -1,7 +1,7 @@
 #ifndef FONTEXPORT_H
 #define FONTEXPORT_H
 
-#include "tableitem.h"
+#include "symboltableitem.h"
 
 #include <QList>
 #include <QTextStream>
@@ -104,13 +104,13 @@ class IFontExport
         struct CHAR_INFO
         {
             const quint8 fstRow;
-            const quint8 lstRow;
+            const quint8 sizeRow;
             const quint8 width;
-            const quint16 position;
+            const quint32 position;
         };
 
     public:
-        explicit IFontExport(QList<TableItem *> items);
+        explicit IFontExport(QList<SymbolTableItem *> items);
         virtual ~IFontExport() {}
 
         QString process();
@@ -124,7 +124,7 @@ class IFontExport
         {
             if (latch)
                 stream << endl << "            ,";
-            stream << '{' << smb.fstRow << ", " << smb.lstRow << ", " << smb.width << ", "
+            stream << '{' << smb.fstRow << ", " << smb.sizeRow << ", " << smb.width << ", "
                    << smb.position << "}\t\t// '" << ch << "\'\t[" << ch.unicode() << ']';
         }
 
@@ -137,19 +137,28 @@ class IFontExport
                 stream << ',' << endl;
         }
 
+        QString size_t_PosBimap(quint32 size)
+        {
+            if (size <= UINT8_MAX)
+                return "uint8_t";
+            else if (size <= UINT16_MAX )
+                return "uint16_t";
+            else
+                return "uint32_t";
+        }
 
     protected:
-        QList<TableItem *> items;
+        QList<SymbolTableItem *> items;
         QImage::Format format;
 
-        quint16 positionInBitmap;
-        quint16 sizeBitmap;
+        quint32 positionInBitmap;
+        quint32 sizeBitmap;
 };
 
 class BitColor final : public IFontExport
 {
     public:
-        explicit BitColor(QList<TableItem *> items) : IFontExport(items)
+        explicit BitColor(QList<SymbolTableItem *> items) : IFontExport(items)
         {
             format = QImage::Format_Mono;
         }
@@ -173,7 +182,7 @@ class BitColor final : public IFontExport
 class GrayscaleColor : public IFontExport
 {
     public:
-        explicit GrayscaleColor(QList<TableItem *> items) : IFontExport(items)
+        explicit GrayscaleColor(QList<SymbolTableItem *> items) : IFontExport(items)
         {
             format = QImage::Format_Grayscale8;
         }

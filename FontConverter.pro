@@ -46,18 +46,18 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    tablemodel.cpp \
-    tableitem.cpp \
-    tableview.cpp \
     fontexport.cpp \
-    export.cpp
+    symboltableitem.cpp \
+    symboltablemodel.cpp \
+    symboltableview.cpp \
+    exportdialog.cpp
 
 HEADERS  += mainwindow.h \
-    tablemodel.h \
-    tableitem.h \
-    tableview.h \
     fontexport.h \
-    export.h
+    symboltableitem.h \
+    symboltablemodel.h \
+    symboltableview.h \
+    exportdialog.h
 
 FORMS    += mainwindow.ui \
     export.ui

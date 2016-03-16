@@ -1,29 +1,27 @@
-#include "tablemodel.h"
+#include "symboltablemodel.h"
 
 
-TableModel::Columns::Columns ()
+SymbolTableModel::Columns::Columns ()
 {
-    operator[](Unicode) = "numeric unicode";
-    operator[](Char) = "char";
-    operator[](ScalableChar) = "scalable char";
+    operator[](Unicode) = "Numeric unicode";
+    operator[](Char) = "Char";
+    operator[](ScalableChar) = "Scalable char";
 }
 
 
-TableModel::TableModel(QObject *p) : QAbstractTableModel(p)
+SymbolTableModel::SymbolTableModel(QObject *p) : QAbstractTableModel(p)
 {}
-TableModel::~TableModel()
+SymbolTableModel::~SymbolTableModel()
 {
-    clear ();
+    clear();
 }
 
-void TableModel::clear()
+void SymbolTableModel::clear()
 {
-    for (TableItem *item : m_items)
-        delete item;
-    m_items.clear();
+    removeRows(0,rowCount());
 }
 
-void TableModel::setRowCount(int rows)
+void SymbolTableModel::setRowCount(int rows)
 {
     int rc = rowCount();
     if (rows < 0 || rc == rows)
@@ -34,24 +32,24 @@ void TableModel::setRowCount(int rows)
         removeRows(rows, rc - rows);
 }
 
-QPixmap TableModel::charPixmap(int row) const
+QPixmap SymbolTableModel::charPixmap(int row) const
 {
     if (row < 0 || row >= m_items.size())
         return QPixmap();
 
-    TableItem *item = m_items[row];
+    SymbolTableItem *item = m_items[row];
     if (item == nullptr)
         return QPixmap();
 
     return item->charPixmap().value<QPixmap>();
 }
 
-void TableModel::setItem (int row, TableItem *item)
+void SymbolTableModel::setItem (int row, SymbolTableItem *item)
 {
     if (row < 0 || row >= m_items.size())
         return;
 
-    TableItem *oldItem = m_items[row];
+    SymbolTableItem *oldItem = m_items[row];
     if (oldItem == item)
         return;
     if (oldItem != nullptr)
@@ -59,18 +57,17 @@ void TableModel::setItem (int row, TableItem *item)
 
     m_items[row] = item;
 
-    emit dataChanged(index(row, Columns::Unicode), index (row,
-                                                            Columns::ScalableChar));
+    emit dataChanged(index(row, Columns::Unicode), index (row, Columns::ScalableChar));
 }
 
-QVariant TableModel::data(const QModelIndex &index, int role) const
+QVariant SymbolTableModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
         return QVariant();
 
     if (role == Qt::DisplayRole || role == Qt::DecorationRole)
     {
-        TableItem *item = m_items[index.row ()];
+        SymbolTableItem *item = m_items[index.row()];
         if (item != nullptr)
             switch (index.column ())
             {
@@ -86,8 +83,7 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-QVariant TableModel::headerData(int section, Qt::Orientation orientation,
-                                 int role) const
+QVariant SymbolTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal)
     {
@@ -100,7 +96,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-bool TableModel::insertRows(int position, int rows, const QModelIndex &parent)
+bool SymbolTableModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     if (rows < 1 || position < 0)
         return false;
@@ -115,13 +111,13 @@ bool TableModel::insertRows(int position, int rows, const QModelIndex &parent)
     return true;
 }
 
-bool TableModel::removeRows(int position, int rows, const QModelIndex &parent)
+bool SymbolTableModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     beginRemoveRows(parent, position, position + rows - 1);
 
     for (int row = 0; row < rows; ++row)
     {
-        TableItem *item = m_items[position];
+        SymbolTableItem *item = m_items[position];
         if (item != nullptr)
             delete item;
         m_items.removeAt(position);

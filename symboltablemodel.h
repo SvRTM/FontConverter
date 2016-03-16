@@ -1,19 +1,19 @@
-#ifndef TABLEMODEL_H
-#define TABLEMODEL_H
+#ifndef SYMBOLTABLEMODEL_H
+#define SYMBOLTABLEMODEL_H
 
-#include "tableitem.h"
+#include "symboltableitem.h"
 #include <QAbstractTableModel>
+
 #include <unordered_map>
 
 
-class TableModel final : public QAbstractTableModel
+class SymbolTableModel final : public QAbstractTableModel
 {
         Q_OBJECT
 
         struct Columns final : std::unordered_map<int, QString>
         {
             Columns ();
-            virtual ~Columns() {}
 
             enum eColumns
             {
@@ -24,23 +24,22 @@ class TableModel final : public QAbstractTableModel
         };
 
     public:
-        TableModel(QObject *p);
-        virtual ~TableModel ();
+        SymbolTableModel(QObject *p);
+        virtual ~SymbolTableModel ();
 
     public:
+        void clear();
         void setRowCount(int rows);
 
-        void setItem(int row, TableItem *item);
+        void setItem(int row, SymbolTableItem *item);
         QPixmap charPixmap(int row) const;
 
-        QList<TableItem *> items() const
+        QList<SymbolTableItem *> items() const
         {
             return m_items;
         }
 
     private:
-        void clear();
-
         virtual QVariant data(const QModelIndex &index, int role) const override;
         virtual QVariant headerData(int section, Qt::Orientation orientation,
                                      int role) const override;
@@ -63,7 +62,7 @@ class TableModel final : public QAbstractTableModel
 
     private:
         const Columns m_headers;
-        QList<TableItem *> m_items;
+        QList<SymbolTableItem *> m_items;
 };
 
-#endif // TABLEMODEL_H
+#endif // SYMBOLTABLEMODEL_H
