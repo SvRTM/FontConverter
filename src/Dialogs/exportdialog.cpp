@@ -1,5 +1,5 @@
 #include "exportdialog.h"
-#include "fontexport.h"
+#include "../font/fontexport.h"
 
 #include "ui_export.h"
 

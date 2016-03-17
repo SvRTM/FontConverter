@@ -1,7 +1,7 @@
 #ifndef FONTEXPORT_H
 #define FONTEXPORT_H
 
-#include "symboltableitem.h"
+#include "../Widgets/symboltableitem.h"
 
 #include <QList>
 #include <QTextStream>

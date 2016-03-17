@@ -1,7 +1,7 @@
 #ifndef SYMBOLTABLEMODEL_H
 #define SYMBOLTABLEMODEL_H
 
-#include "symboltableitem.h"
+#include "../symboltableitem.h"
 #include <QAbstractTableModel>
 
 #include <unordered_map>

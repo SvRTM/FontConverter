@@ -1,8 +1,8 @@
 #ifndef SYMBOLTABLEVIEW_H
 #define SYMBOLTABLEVIEW_H
 
-#include "symboltableitem.h"
-#include "symboltablemodel.h"
+#include "../symboltableitem.h"
+#include "../TableModel/symboltablemodel.h"
 
 #include <QTableView>
 

@@ -1,13 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "symboltablemodel.h"
-#include "symboltableview.h"
-#include "exportdialog.h"
+#include "Widgets/TableModel/symboltablemodel.h"
+#include "Widgets/TableView/symboltableview.h"
+#include "Dialogs/exportdialog.h"
 
 #include <QFontDialog>
 #include <QStaticText>
-
+#include <QBitmap>
 
 
 CodeNumbers::CodeNumbers ()
@@ -40,7 +40,6 @@ CodeNumbers::CodeNumbers ()
     operator[](UnknownSymbol) = QChar(0xFFFF);
 }
 
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
@@ -53,22 +52,24 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     createToolBar();
     createStatusBar();
 
-    QAbstractItemModel *model = ui->symbolTable->model();
-    QItemSelectionModel *selectionModel = new QItemSelectionModel(model);
-    ui->symbolTable->setSelectionModel(selectionModel);
-    connect(selectionModel, &QItemSelectionModel::selectionChanged, this,
-            &MainWindow::tableSelection);
+    createSelectionModel();
 
+    ui->graphicsView->setAlignment(Qt::AlignCenter);
     ui->graphicsView->setScene(new QGraphicsScene(this));
+    connect(ui->symbolWidget, &SymbolWidget::valueChanged, [&] (int value)
+    {
+        ui->graphicsView->scene()->clear();
+        int row = ui->symbolTable->selectionModel()->currentIndex().row();
+        viewSymbol(row, value);
+    });
 
 
-    // Create list view item model
     QStandardItemModel *listModel = new QStandardItemModel(ui->listCharacters);
     ui->listCharacters->setModel(listModel);
 
     const QListView *pListView = ui->listCharacters;
-    connect(listModel, &QStandardItemModel::itemChanged, [pListView,
-                                                           listModel](QStandardItem * item)
+    connect(listModel, &QStandardItemModel::itemChanged, [pListView, listModel]
+            (QStandardItem * item)
     {
         const QModelIndex index = listModel->indexFromItem(item);
         QItemSelectionModel *selModel = pListView->selectionModel();
@@ -95,6 +96,15 @@ MainWindow::~MainWindow ()
 {
     ui->symbolTable->clearSelection();
     delete ui;
+}
+
+void MainWindow::createSelectionModel() const
+{
+    QAbstractItemModel *model = ui->symbolTable->model();
+    QItemSelectionModel *selectionModel = new QItemSelectionModel(model);
+    ui->symbolTable->setSelectionModel(selectionModel);
+    connect(selectionModel, &QItemSelectionModel::selectionChanged, this,
+            &MainWindow::tableSelection);
 }
 
 void MainWindow::prepareCodeNumbersList(QStandardItemModel *listModel)
@@ -131,6 +141,41 @@ QStandardItem *MainWindow::createCodeListItem(QString txt, Qt::CheckState state)
     return listItem;
 }
 
+QPair<int, int> MainWindow::viewSymbol(int row, int zoom)
+{
+    QPair<int, int> size(0, 0);
+
+    QPixmap pixmap = ui->symbolTable->model()->charPixmap(row);
+    if (pixmap.isNull())
+        return size;
+
+    QImage::Format format = QImage::Format_Grayscale8;
+    if (QFont::NoAntialias & m_font.styleStrategy())
+        format = QImage::Format_Mono;
+    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format, Qt::AvoidDither));
+
+    size.first = pixmap.width();
+    int width = size.first * zoom;
+    size.second = pixmap.height();
+    int height = size.second * zoom;
+    ui->graphicsView->scene()->setSceneRect(0, 0, width, height);
+    pixmap = pixmap.scaled(width, height, Qt::KeepAspectRatio);
+
+    if (zoom > 3)
+    {
+        QPainter painter(&pixmap);
+        painter.setPen(Qt::gray);
+
+        for (int n = zoom; n < width; n += zoom)
+            painter.drawLine (n, 0, n, height);
+        for (int n = zoom; n < height; n += zoom)
+            painter.drawLine (0, n, width, n);
+    }
+    ui->graphicsView->scene()->addPixmap(pixmap);
+
+    return size;
+}
+
 void MainWindow::tableSelection(const QItemSelection &selected,
                                 const QItemSelection &deselected)
 {
@@ -140,32 +185,15 @@ void MainWindow::tableSelection(const QItemSelection &selected,
     if (!selected.isEmpty())
         row = selected.indexes()[0].row();
     else if (!deselected.isEmpty())
-        row = deselected.indexes ()[0].row();
+        row = deselected.indexes()[0].row();
     else
+    {
+        ui->symbolWidget->drawSize();
         return;
+    }
 
-    QPixmap pixmap = ui->symbolTable->model()->charPixmap(row);
-    if (pixmap.isNull())
-        return;
-
-    QImage::Format format = QImage::Format_Grayscale8;
-    if (QFont::NoAntialias & m_font.styleStrategy())
-        format = QImage::Format_Mono;
-
-    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format, Qt::AvoidDither));
-
-    int width = pixmap.width();
-    int height = pixmap.height();
-    pixmap = pixmap.scaled(width * 10, height * 10, Qt::KeepAspectRatio);
-    QPainter painter(&pixmap);
-    painter.setPen(Qt::gray);
-
-    for (int n = 10; n < width * 10; n += 10)
-        painter.drawLine (n, 0, n, height * 10);
-    for (int n = 10; n < height * 10; n += 10)
-        painter.drawLine (0, n, width * 10, n);
-
-    ui->graphicsView->scene()->addPixmap(pixmap);
+    QPair<int, int> size = viewSymbol(row, ui->symbolWidget->zoom());
+    ui->symbolWidget->drawSize(size.first, size.second);
 }
 
 void MainWindow::prepareTable(QFont &font)
@@ -174,11 +202,12 @@ void MainWindow::prepareTable(QFont &font)
     if (selections.size() == 0)
     {
         ui->symbolTable->model()->clear();
+        ui->symbolWidget->drawSize();
         disableAction(true);
         return;
     }
 
-    int selRow = 0;
+    int selRow = -1;
     QItemSelectionModel *selModel = ui->symbolTable->selectionModel();
     if (selModel->hasSelection())
     {
@@ -208,13 +237,7 @@ void MainWindow::prepareTable(QFont &font)
             painter.setFont(font);
             painter.fillRect(0, 0, width, height, Qt::white);
             if (*c == m_codeNumbers[CodeNumbers::UnknownSymbol].at(0))
-            {
-                int c = (height - width) / 2;
-                painter.fillRect(0, c, width, width, Qt::black);
-                painter.setPen(Qt::white);
-                painter.drawLine(1, c + 1, width - 1 - 1, width - 1 + c - 1);
-                painter.drawLine(1, width - 1 + c - 1, width - 1 - 1, c + 1);
-            }
+                drawUnknowSymbol(painter, height, width);
             else
                 painter.drawStaticText(0, 0, QStaticText(*c));
 
@@ -225,6 +248,15 @@ void MainWindow::prepareTable(QFont &font)
     ui->symbolTable->resizeRowsToContents();
 
     emit ui->symbolTable->selectRow(selRow);
+}
+
+void MainWindow::drawUnknowSymbol(QPainter &painter, int height, int width)
+{
+    int c = (height - width) / 2;
+    painter.fillRect(0, c, width, width, Qt::black);
+    painter.setPen(Qt::white);
+    painter.drawLine(1, c + 1, width - 1 - 1, width - 1 + c - 1);
+    painter.drawLine(1, width - 1 + c - 1, width - 1 - 1, c + 1);
 }
 
 void MainWindow::createToolBar()
@@ -277,11 +309,11 @@ void MainWindow::on_actionImportFont_triggered()
     bool ok;
     m_font = QFontDialog::getFont(&ok, m_font, this);
     m_font.setStyleStrategy(styleStrategy);
-    if (ok)
-    {
-        prepareTable(m_font);
-        disableAction(false);
-    }
+    if (!ok)
+        return;
+
+    prepareTable(m_font);
+    disableAction(false);
 }
 
 void MainWindow::on_actionExportFontC_triggered()
@@ -300,7 +332,7 @@ void MainWindow::on_actionNoAntialias_triggered(bool e)
 
 void MainWindow::on_actionExit_triggered()
 {
-
+    close();
 }
 
 

@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "symboltableitem.h"
+#include "Widgets/symboltableitem.h"
 
 #include <QMainWindow>
 #include <QGraphicsSimpleTextItem>
@@ -55,14 +55,18 @@ class MainWindow : public QMainWindow
         void changeEvent(QEvent *e);
 
     private:
+        void createToolBar();
+        void createStatusBar();
+        void createSelectionModel() const;
+
         void prepareCodeNumbersList(QStandardItemModel *listModel);
         QStandardItem *createCodeListItem(QString txt, Qt::CheckState state = Qt::Checked);
 
-        void createToolBar();
-        void createStatusBar();
-
         void prepareTable(QFont &font);
+        void drawUnknowSymbol(QPainter &painter, int height, int width);
         void setStyleStrategy(QFont::StyleStrategy styleStrategy);
+
+        QPair<int, int> viewSymbol(int row, int zoom);
 
         void disableAction(bool disable);
         QFrame *separator()
@@ -74,7 +78,8 @@ class MainWindow : public QMainWindow
         }
 
     private slots:
-        void tableSelection(const QItemSelection &selected, const QItemSelection &deselected);
+        void tableSelection(const QItemSelection &selected,
+                            const QItemSelection &deselected);
 
         void on_actionImportFont_triggered();
         void on_actionExportFontC_triggered();

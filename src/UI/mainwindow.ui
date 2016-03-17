@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1088</width>
-    <height>733</height>
+    <width>1084</width>
+    <height>729</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -62,19 +62,28 @@
         </item>
        </layout>
       </widget>
-      <widget class="QGraphicsView" name="graphicsView">
-       <property name="backgroundBrush">
-        <brush brushstyle="SolidPattern">
-         <color alpha="255">
-          <red>232</red>
-          <green>231</green>
-          <blue>231</blue>
-         </color>
-        </brush>
-       </property>
-       <property name="renderHints">
-        <set>QPainter::NonCosmeticDefaultPen</set>
-       </property>
+      <widget class="QWidget" name="layoutWidget_2">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="SymbolWidget" name="symbolWidget" native="true"/>
+        </item>
+        <item>
+         <widget class="QGraphicsView" name="graphicsView">
+          <property name="backgroundBrush">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>232</red>
+             <green>231</green>
+             <blue>231</blue>
+            </color>
+           </brush>
+          </property>
+          <property name="renderHints">
+           <set>QPainter::NonCosmeticDefaultPen</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -85,7 +94,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1088</width>
+     <width>1084</width>
      <height>23</height>
     </rect>
    </property>
@@ -154,7 +163,13 @@
   <customwidget>
    <class>SymbolTableView</class>
    <extends>QTableView</extends>
-   <header location="global">symboltableview.h</header>
+   <header>Widgets/TableView/symboltableview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SymbolWidget</class>
+   <extends>QWidget</extends>
+   <header>Widgets/symbolwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
