@@ -5,26 +5,36 @@
 
 
 ExportDialog::ExportDialog(const FontInfo &_fontInfo,
-                           const QList<SymbolTableItem *> &_items,
-                           QWidget *parent)
+                           const QList<SymbolTableItem *> &_items, QWidget *parent)
     : QDialog(parent), ui(new Ui::Export), fontInfo(_fontInfo), items(_items)
 {
     ui->setupUi (this);
     ui->fontName->setText(QString("%1%2_%3pt_%4").arg(_fontInfo.family)
-                          .arg(FontInfo::Mode::Antialias == _fontInfo.mode ? "_AA" : nullptr)
+                          .arg(FontMode::Antialias == _fontInfo.mode ? "_AA" : nullptr)
                           .arg(_fontInfo.poinSize).arg(_fontInfo.styleName)
                           .replace(" ", "_"));
 
-    if (FontInfo::Mode::Bitmap == _fontInfo.mode)
-    {
-        connect(ui->cancel,  &QPushButton::clicked, this,  &ExportDialog::reject);
-        connect(ui->save, &QPushButton::clicked, this, &ExportDialog::save);
+    connect(ui->save, &QPushButton::clicked, this, &ExportDialog::save);
+    connect(ui->cancel, &QPushButton::clicked, this, &ExportDialog::reject);
 
-        connect(ui->rbCxx11, &QRadioButton::toggled, this , [&] ()
+    connect(ui->rbMode_1, &QRadioButton::clicked, this , [&] ()
+    {
+        ui->saveIfont->setVisible(false);
+        on_btUpdate_clicked();
+    });
+    connect(ui->rbMode_2, &QRadioButton::clicked, this , [&] ()
+    {
+        ui->saveIfont->setVisible(true);
+        on_btUpdate_clicked();
+    });
+
+    if (FontMode::Bitmap == _fontInfo.mode)
+    {
+        connect(ui->rbCxx11, &QRadioButton::clicked, this , [&] ()
         {
             on_btUpdate_clicked();
         });
-        connect(ui->rbCxx14, &QRadioButton::toggled, this , [&] ()
+        connect(ui->rbCxx14, &QRadioButton::clicked, this , [&] ()
         {
             on_btUpdate_clicked();
         });
@@ -60,12 +70,15 @@ IFontExport::CxxStandart ExportDialog::cxxStandart()
 
 void ExportDialog::convert()
 {
+    const IFontExport::Mode mode = ui->rbMode_1->isChecked() ?
+                                   IFontExport::Mode::M1 : IFontExport::Mode::M2;
+
     IFontExport *exp;
 
-    if (FontInfo::Mode::Bitmap == fontInfo.mode)
-        exp = new BitColor(ui->fontName->text(), items,  cxxStandart());
+    if (FontMode::Bitmap == fontInfo.mode)
+        exp = new BitColor(ui->fontName->text(), items,  mode, cxxStandart());
     else
-        exp = new GrayscaleColor(ui->fontName->text(), items);
+        exp = new GrayscaleColor(ui->fontName->text(), items, mode);
     QString str = exp->process();
     ui->plainTextEdit->setPlainText(str);
 
@@ -88,14 +101,21 @@ void ExportDialog::save()
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
 
-    fontName = fontName.toUpper();
     QTextStream out(&file);
     out.setCodec("UTF-8");
-    out << "#ifndef " <<  fontName << "_H_" << endl
-        << "#define " << fontName << "_H_"
-        << endl << endl
-        << "#include <stdint.h>" << endl << endl
-        << ui->plainTextEdit->toPlainText()
-        << endl << endl
-        << "#endif /* " <<  fontName << "_H_ */";
+    out << ui->plainTextEdit->toPlainText();
+}
+
+void ExportDialog::on_saveIfont_clicked()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                                    "ifont.h",
+                                                    tr("C/C++ Header file (*.h *.hh *.hpp)"));
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QTextStream out(&file);
+    out.setCodec("UTF-8");
+    out << IFontExport::saveIFont();
 }

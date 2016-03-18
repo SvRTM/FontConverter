@@ -14,12 +14,7 @@ namespace Ui
 
 struct FontInfo
 {
-    enum class Mode
-    {
-        Antialias,
-        Bitmap
-    } const mode;
-
+    const FontMode  mode;
     const QString &family;
     const int poinSize;
     const QString &styleName;
@@ -42,7 +37,7 @@ class ExportDialog : public QDialog
 
     private slots:
         void save();
-
+        void on_saveIfont_clicked();
 
         void on_btUpdate_clicked();
 

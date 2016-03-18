@@ -152,8 +152,7 @@ QPair<int, int> MainWindow::viewSymbol(int row, int zoom)
     QImage::Format format = QImage::Format_Grayscale8;
     if (QFont::NoAntialias & m_font.styleStrategy())
         format = QImage::Format_Mono;
-    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format,
-                                                                 Qt::AvoidDither));
+    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format, Qt::AvoidDither));
 
     size.first = pixmap.width();
     int width = size.first * zoom;
@@ -199,8 +198,7 @@ void MainWindow::tableSelection(const QItemSelection &selected,
 
 void MainWindow::prepareTable(QFont &font)
 {
-    QModelIndexList selections =
-        ui->listCharacters->selectionModel()->selectedRows();
+    QModelIndexList selections = ui->listCharacters->selectionModel()->selectedRows();
     if (selections.size() == 0)
     {
         ui->symbolTable->model()->clear();
@@ -212,10 +210,8 @@ void MainWindow::prepareTable(QFont &font)
     int selRow = -1;
     QItemSelectionModel *selModel = ui->symbolTable->selectionModel();
     if (selModel->hasSelection())
-    {
         selRow = selModel->selectedRows()[0].row();
-        emit selModel->select(selModel->selection(), QItemSelectionModel::Deselect);
-    }
+
     ui->graphicsView->scene()->clear();
 
     sbFontStyleName->setText(font.styleName());
@@ -331,10 +327,9 @@ void MainWindow::on_actionExportFontC_triggered()
 {
     FontInfo fontInfo
     {
-        m_font.styleStrategy() &QFont::NoAntialias ? FontInfo::Mode::Bitmap : FontInfo::Mode::Antialias,
+        m_font.styleStrategy() &QFont::NoAntialias ? FontMode::Bitmap : FontMode::Antialias,
         m_font.family(), m_font.pointSize(), m_font.styleName()
     };
-
 
     ExportDialog exp(fontInfo,  ui->symbolTable->items(), this);
     exp.exec();
