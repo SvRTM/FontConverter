@@ -97,6 +97,7 @@ class MainWindow : public QMainWindow
         QLabel *sbFontName;
         QLabel *sbFontSize;
         QLabel *sbFontStyleStrategy;
+        QLabel *sbFontStyleName;
 };
 
 #endif // MAINWINDOW_H

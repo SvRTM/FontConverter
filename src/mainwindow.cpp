@@ -152,7 +152,8 @@ QPair<int, int> MainWindow::viewSymbol(int row, int zoom)
     QImage::Format format = QImage::Format_Grayscale8;
     if (QFont::NoAntialias & m_font.styleStrategy())
         format = QImage::Format_Mono;
-    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format, Qt::AvoidDither));
+    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format,
+                                                                 Qt::AvoidDither));
 
     size.first = pixmap.width();
     int width = size.first * zoom;
@@ -198,7 +199,8 @@ void MainWindow::tableSelection(const QItemSelection &selected,
 
 void MainWindow::prepareTable(QFont &font)
 {
-    QModelIndexList selections = ui->listCharacters->selectionModel()->selectedRows();
+    QModelIndexList selections =
+        ui->listCharacters->selectionModel()->selectedRows();
     if (selections.size() == 0)
     {
         ui->symbolTable->model()->clear();
@@ -216,7 +218,7 @@ void MainWindow::prepareTable(QFont &font)
     }
     ui->graphicsView->scene()->clear();
 
-
+    sbFontStyleName->setText(font.styleName());
     sbFontName->setText(font.family());
     sbFontSize->setText(QString ("%1").arg(font.pointSize()));
 
@@ -267,23 +269,31 @@ void MainWindow::createToolBar()
 
 void MainWindow::createStatusBar()
 {
-    QLabel *lb = new QLabel("Font name: ");
+    QLabel *lb = new QLabel("Font name: ", statusBar());
     lb->setAlignment(Qt::AlignLeading);
     statusBar()->addWidget(lb);
-    sbFontName = new QLabel();
+    sbFontName = new QLabel(statusBar());
     statusBar()->addWidget(sbFontName);
 
     statusBar()->addWidget(separator());
 
-    lb = new QLabel("Font size: ");
+    lb = new QLabel("Font size: ", statusBar());
     lb->setAlignment(Qt::AlignLeading);
     statusBar()->addWidget(lb);
-    sbFontSize = new QLabel();
+    sbFontSize = new QLabel(statusBar());
     statusBar()->addWidget(sbFontSize);
 
     statusBar()->addWidget(separator());
 
-    sbFontStyleStrategy = new QLabel("Antialias");
+    statusBar()->addWidget(new QLabel("Font style:", statusBar()));
+
+    sbFontStyleName = new QLabel(statusBar());
+    sbFontStyleName->setAlignment(Qt::AlignLeading);
+    statusBar()->addWidget(sbFontStyleName);
+
+    statusBar()->addWidget(separator());
+
+    sbFontStyleStrategy = new QLabel("Antialias", statusBar());
     sbFontStyleStrategy->setAlignment(Qt::AlignLeading);
     sbFontStyleStrategy->setVisible(false);
     statusBar()->addWidget(sbFontStyleStrategy);
@@ -291,7 +301,8 @@ void MainWindow::createStatusBar()
 
 void MainWindow::setStyleStrategy(QFont::StyleStrategy styleStrategy)
 {
-    m_font.setStyleStrategy((QFont::StyleStrategy) (m_font.styleStrategy() ^ styleStrategy));
+    m_font.setStyleStrategy((QFont::StyleStrategy) (m_font.styleStrategy() ^
+                                                    styleStrategy));
 }
 
 void MainWindow::disableAction(bool disable)
@@ -318,8 +329,14 @@ void MainWindow::on_actionImportFont_triggered()
 
 void MainWindow::on_actionExportFontC_triggered()
 {
-    int depth = m_font.styleStrategy() &QFont::NoAntialias ? 1 : 8;
-    ExportDialog exp(depth, ui->symbolTable->items(), this);
+    FontInfo fontInfo
+    {
+        m_font.styleStrategy() &QFont::NoAntialias ? FontInfo::Mode::Bitmap : FontInfo::Mode::Antialias,
+        m_font.family(), m_font.pointSize(), m_font.styleName()
+    };
+
+
+    ExportDialog exp(fontInfo,  ui->symbolTable->items(), this);
     exp.exec();
 }
 

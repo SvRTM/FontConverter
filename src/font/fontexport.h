@@ -110,7 +110,14 @@ class IFontExport
         };
 
     public:
-        explicit IFontExport(QList<SymbolTableItem *> items);
+        enum class CxxStandart
+        {
+            Cxx11,
+            Cxx14
+        };
+
+        explicit IFontExport(const QString &fontName, QList<SymbolTableItem *> items,
+                             QImage::Format _format);
         virtual ~IFontExport() {}
 
         QString process();
@@ -120,7 +127,7 @@ class IFontExport
                                                   QTextStream &bitmaps) = 0;
 
         void prepareCharInfo(const QChar ch, const CHAR_INFO &smb, QTextStream &stream,
-                             bool latch)
+                             bool latch) const
         {
             if (latch)
                 stream << endl << "            ,";
@@ -129,7 +136,7 @@ class IFontExport
         }
 
         void prepareBlock( quint16 startChar, quint16 endChar, quint16 nDescriptor,
-                           QTextStream &stream, bool c = true)
+                           QTextStream &stream, bool c = true) const
         {
             stream << "             {" << startChar << ", " << endChar << ',' <<
                    " &descriptors[" <<  nDescriptor << "]}";
@@ -137,7 +144,7 @@ class IFontExport
                 stream << ',' << endl;
         }
 
-        QString size_t_PosBimap(quint32 size)
+        QString size_t_PosBimap(quint32 size) const
         {
             if (size <= UINT8_MAX)
                 return "uint8_t";
@@ -148,8 +155,9 @@ class IFontExport
         }
 
     protected:
+        const QString &fontName;
         QList<SymbolTableItem *> items;
-        QImage::Format format;
+        const QImage::Format format;
 
         quint32 positionInBitmap;
         quint32 sizeBitmap;
@@ -158,9 +166,9 @@ class IFontExport
 class BitColor final : public IFontExport
 {
     public:
-        explicit BitColor(QList<SymbolTableItem *> items) : IFontExport(items)
+        explicit BitColor(const QString &fontName, QList<SymbolTableItem *> items,
+                          CxxStandart _cxx) : IFontExport(fontName, items, QImage::Format_Mono), cxx(_cxx)
         {
-            format = QImage::Format_Mono;
         }
 
     private:
@@ -170,21 +178,24 @@ class BitColor final : public IFontExport
         quint8 lastRow(const QImage &image, QBitArray &bits, bool &empty);
 
         QString toString(const QBitArray &bit, QTextStream &stream);
-        quint8 sizeInByte(const QBitArray &bit)
+        quint8 sizeInByte(const QBitArray &bit) const
         {
             return bit.size() / 8 + (bit.size() % 8 ? 1 : 0);
         }
 
         virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
                                                   QTextStream &bitmaps) override;
+    private:
+        CxxStandart cxx;
 };
 
 class GrayscaleColor : public IFontExport
 {
     public:
-        explicit GrayscaleColor(QList<SymbolTableItem *> items) : IFontExport(items)
+        explicit GrayscaleColor(const QString &fontName,
+                                QList<SymbolTableItem *> items) : IFontExport(fontName, items,
+                                                                                  QImage::Format_Grayscale8)
         {
-            format = QImage::Format_Grayscale8;
         }
 
     private:

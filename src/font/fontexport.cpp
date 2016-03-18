@@ -1,21 +1,20 @@
 #include "fontexport.h"
 #include <algorithm>
 
-IFontExport::IFontExport(QList<SymbolTableItem *> items)
+IFontExport::IFontExport(const QString &_fontName,
+                         QList<SymbolTableItem *> _items,
+                         QImage::Format _format) : fontName(_fontName), items(_items), format(_format),
+    positionInBitmap(0), sizeBitmap(0)
 {
-    this->items = items;
-    positionInBitmap = 0;
-    sizeBitmap = 0;
 }
 
 QString IFontExport::process()
 {
     QString strBitmap, strSymbol, strBlock;
-    QTextStream streamBitmap(&strBitmap), streamSymbol(&strSymbol),
-                streamBlock(&strBlock);
+    QTextStream streamBitmap(&strBitmap), streamSymbol(&strSymbol), streamBlock(&strBlock);
 
-    std::sort(items.begin(), items.end(), [] (const SymbolTableItem * a,
-                                              const SymbolTableItem * b) -> bool
+    std::sort(items.begin(), items.end(), [] (const SymbolTableItem * const a,
+                                              const SymbolTableItem * const b) -> bool
     {
         return a->numericUnicode() < b->numericUnicode();
     });
@@ -23,9 +22,9 @@ QString IFontExport::process()
     quint8 height;
     quint16 startChar = 0, prevChar = 0, nDescriptor = 0, sizeBlocks = 0;
     bool latch = false;
-    for (int n = 0; n < items.size(); n++)
+    for (int n = 0; n < items.size(); ++n)
     {
-        SymbolTableItem *item = items[n];
+        SymbolTableItem  *item = items[n];
         QPixmap pixmap = item->charPixmap().value<QPixmap>();
         QImage image = pixmap.toImage().convertToFormat(format, Qt::AvoidDither);
 
@@ -47,7 +46,6 @@ QString IFontExport::process()
         {
             height = image.height();
             startChar = currChar;
-
         }
         prevChar = currChar;
 
@@ -58,34 +56,35 @@ QString IFontExport::process()
     }
     prepareBlock(startChar, prevChar, nDescriptor, streamBlock, false);
 
-    QString oneBitColor = "extern const struct ONE_BIT_COLOR\n"
-                          "{\n"
-                          "    const uint8_t    height        = %1;\n"
-                          "    const struct CHAR_INFO\n"
-                          "    {\n"
-                          "        const uint8_t   fstRow;\n"
-                          "        const uint8_t   sizeRow;\n"
-                          "        const uint8_t   width;\n"
-                          "        const %2 position;\n"
-                          "    } descriptors[%3] = {\n"
-                          "             %4\n"
-                          "       };\n"
-                          "\n"
-                          "    const struct BLOCK\n"
-                          "    {\n"
-                          "        const uint16_t    startChar;\n"
-                          "        const uint16_t    endChar;\n"
-                          "        const CHAR_INFO *descriptors;\n"
-                          "    } blocks[%5] = {\n"
-                          "%6\n"
-                          "       };\n"
-                          "\n"
-                          "    const uint8_t bitmaps[%7] = {\n"
-                          "%8\n"
-                          "    };\n"
-                          "};";
+    QString fontStruct = "struct %1\n"
+                         "{\n"
+                         "    const uint8_t    height        = %2;\n"
+                         "    const struct CHAR_INFO\n"
+                         "    {\n"
+                         "        const uint8_t   fstRow;\n"
+                         "        const uint8_t   sizeRow;\n"
+                         "        const uint8_t   width;\n"
+                         "        const %3 position;\n"
+                         "    } descriptors[%4] = {\n"
+                         "             %5\n"
+                         "       };\n"
+                         "\n"
+                         "    const struct BLOCK\n"
+                         "    {\n"
+                         "        const uint16_t    startChar;\n"
+                         "        const uint16_t    endChar;\n"
+                         "        const CHAR_INFO *descriptors;\n"
+                         "    } blocks[%6] = {\n"
+                         "%7\n"
+                         "       };\n"
+                         "\n"
+                         "    const uint8_t bitmaps[%8] = {\n"
+                         "%9\n"
+                         "    };\n"
+                         "};";
 
-    return oneBitColor.arg(height).arg(size_t_PosBimap(sizeBitmap)).arg(items.size()).arg(strSymbol)
+    return fontStruct.arg(fontName)
+           .arg(height).arg(size_t_PosBimap(sizeBitmap)).arg(items.size()).arg(strSymbol)
            .arg(sizeBlocks + 1).arg(strBlock)
            .arg(sizeBitmap).arg(strBitmap);
 }
@@ -96,7 +95,7 @@ QBitArray BitColor::scanLine(const quint8 index, const QImage &image) const
 {
     const quint8 width = image.width();
     QBitArray bits(width);
-    for (int n = 0; n != width; n++)
+    for (int n = 0; n != width; ++n)
     {
         bool px = static_cast<bool>(static_cast<quint8>(image.pixel(n, index)));
         bits.setBit(n, px);
@@ -149,16 +148,38 @@ QString BitColor::toString(const QBitArray &bit, QTextStream &stream)
         return nullptr;
 
     QByteArray x;
-    stream << "        0b";
-    for (int i = 0; i < bit.size(); i++)
+    stream << "        " << (CxxStandart::Cxx14 == cxx ? "0b" : "0x");
+
+    if (CxxStandart::Cxx14 == cxx)
+        for (int i = 0; i < bit.size(); i++)
+        {
+            if (i != 0 && i % 8 == 0)
+                stream << ", 0b";
+            bool b = bit.testBit(i);
+            stream << b;
+
+            x += b ? "░" : "█";
+        }
+    else
     {
-        if (i != 0 && i % 8 == 0)
-            stream << ", 0b";
-        stream << bit.testBit(i);
-        x += bit.testBit(i) ? "░" : "█";
+        quint8 v = 0;
+        for (int i = 0; i < bit.size(); i++)
+        {
+            if (i != 0 && i % 8 == 0)
+            {
+                stream << uppercasedigits << hex << v << "U, 0x";
+                v = 0;
+            }
+            bool b = bit.testBit(i);
+            v <<= 1;
+            v += b;
+
+            x += b ? "░" : "█";
+        }
+        stream << uppercasedigits << hex << v << 'U';
     }
 
-    return QString(x);
+    return x.data();
 }
 
 IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
@@ -197,7 +218,8 @@ IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
     sizeBitmap += size;
 
     CHAR_INFO charInfo = { fstRow, static_cast<const quint8>(lstRow - fstRow + 1) ,
-                           static_cast<const quint8>(image.width()),  positionInBitmap };
+                           static_cast<const quint8>(image.width()),  positionInBitmap
+                         };
     positionInBitmap += size;
 
     return charInfo;
@@ -210,7 +232,7 @@ QByteArray GrayscaleColor::scanLine(const quint8 index,
 {
     const quint8 width = image.width();
     QByteArray bytes;
-    for (int n = 0; n != width; n++)
+    for (int n = 0; n != width; ++n)
     {
         quint8 px = static_cast<quint8>(image.pixel(n, index));
         bytes.append(px);
@@ -265,7 +287,7 @@ void GrayscaleColor::toString(const QByteArray &byte, QTextStream &stream)
 
     QString str;
     QTextStream stm(&str);
-    for (int i = 0; i < byte.size(); i++)
+    for (int i = 0; i < byte.size(); ++i)
     {
         quint8 b = static_cast<quint8>(byte[i]);
 
@@ -298,7 +320,7 @@ IFontExport::CHAR_INFO GrayscaleColor::prepareBitmaps_CharInfo(
     bool isEmpty;
     QByteArray lbytes;
     quint8 lstRow = lastRow(image, lbytes, isEmpty);
-    for (quint8 i = fstRow + 1; i < lstRow; i++)
+    for (quint8 i = fstRow + 1; i < lstRow; ++i)
     {
         QByteArray byte = scanLine(i, image);
         if (!latch)
@@ -320,7 +342,8 @@ IFontExport::CHAR_INFO GrayscaleColor::prepareBitmaps_CharInfo(
     sizeBitmap += size;
 
     CHAR_INFO charInfo = { fstRow, static_cast<const quint8>(lstRow - fstRow + 1),
-                           static_cast<const quint8>(image.width()),  positionInBitmap };
+                           static_cast<const quint8>(image.width()),  positionInBitmap
+                         };
     positionInBitmap += size;
 
     return charInfo;
