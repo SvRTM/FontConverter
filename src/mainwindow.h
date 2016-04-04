@@ -81,6 +81,8 @@ class MainWindow : public QMainWindow
         void tableSelection(const QItemSelection &selected,
                             const QItemSelection &deselected);
 
+        void on_updateTbl_clicked();
+
         void on_actionImportFont_triggered();
         void on_actionExportFontC_triggered();
         void on_actionNoAntialias_triggered(bool e);

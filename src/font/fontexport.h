@@ -11,61 +11,54 @@
 
 
 /*
-struct ONE_BIT_COLOR
+/#############################/
+/#                 V A R I A N T    I             #
+/#############################/
+struct Tinos_11pt_Italic
 {
-    const uint8_t   height        = 16;
-    const uint16_t firstSymbol = 65;
+    const uint8_t    height        = 16;
+
     const struct CHAR_INFO
     {
         const uint8_t   fstRow;
-        const uint8_t   lstRow;
+        const uint8_t   sizeRow;
         const uint8_t   width;
-        const uint16_t position;
-    } descriptors[123] = {...};
-
-    const uint8_t bitmaps[456] = {...};
-};
-
-struct IFONT
-{
-    const struct CHAR_INFO
-    {
-        const uint8_t   fstRow;
-        const uint8_t   lstRow;
-        const uint8_t   width;
-        const uint16_t position;
-    }
-}
-
-// with blocks:
-struct ONE_BIT_COLOR
-{
-    const uint8_t   height    = 16;
-    const struct CHAR_INFO
-    {
-        const uint8_t   fstRow;
-        const uint8_t   lstRow;
-        const uint8_t   width;
-        const uint16_t position;
-    } descriptors[123] = {...};
+        const uint8_t position;
+    } descriptors[1] = {
+             {2, 12, 12, 0}		// '￿'	[65535]
+       };
 
     const struct BLOCK
     {
         const uint16_t    startChar;
         const uint16_t    endChar;
         const CHAR_INFO *descriptors;
-    } blocks[12] = {...};
+    } blocks[1] = {
+             {65535, 65535, &descriptors[0]}
+       };
 
-    const uint8_t bitmaps[456] = {..};
+    const uint8_t bitmaps[24] = {...};
 };
 
-// ///////////////
-struct IFONT
+
+/#############################/
+/#                 V A R I A N T    II            #
+/#############################/
+struct IFont
 {
+    enum class Mode
+    {
+        Antialias,
+        Bitmap
+    };
+
+    explicit IFont(uint8_t _height, uint8_t _sizeOfBlock, Mode _mode)
+        : height(_height), sizeOfBlock(_sizeOfBlock), mode(_mode) {}
+
     struct CHAR_INFO
     {
         const uint8_t   fstRow;
-        const uint8_t   lstRow;
+        const uint8_t   sizeRow;
         const uint8_t   width;
         const uint16_t position;
     };
@@ -76,26 +69,50 @@ struct IFONT
         const CHAR_INFO *descriptors;
     };
 
-    virtual uint8_t height()           const = 0 ;
-    virtual const BLOCK *blocks()  const = 0 ;
+    const uint8_t height;
+    const uint8_t sizeOfBlock;
+    const Mode   mode;
+
+    virtual const BLOCK *blocks()    const = 0;
+    virtual const uint8_t *bitmaps() const = 0;
+
+    static inline const IFont::CHAR_INFO *const descriptor(const wchar_t ch, const IFont &font);
 };
 
-struct ONE_BIT_COLOR : IFONT
+const IFont::CHAR_INFO *const IFont::descriptor(const wchar_t ch, const IFont &font)
 {
-    const uint8_t _height = 16;
-    const CHAR_INFO descriptors[1] = {{1, 2, 3, 4}};
-    const BLOCK _blocks[1] = {{11, 22, &descriptors[0]}};
-    const uint8_t bitmaps[3] = {3, 5, 7};
-
-    uint8_t height() const override
+    for (size_t n = 0; n < font.sizeOfBlock; ++n)
     {
-        return _height;
+        const IFont::BLOCK *const block = &font.blocks()[n];
+        if (ch >= block->startChar && ch <= block->endChar)
+            return &block->descriptors[ch - block->startChar];
     }
-    const BLOCK *blocks() const override
+
+    const IFont::BLOCK *const block = &font.blocks()[font.sizeOfBlock - 1];
+    return &block->descriptors[0];
+}
+# # # # # # # # # # # # # # # # #
+struct Tinos_11pt_Italic : IFont
+{
+    Tinos_11pt_Italic() : IFont(16, 1, Mode::Bitmap) {}
+
+    const CHAR_INFO descriptors[1] = {
+             {2, 12, 12, 0}		// '￿'	[65535]
+    };
+    const BLOCK _blocks[1] = {
+             {65535, 65535, &descriptors[0]}
+    };
+    const uint8_t _bitmaps[24] = {...};
+
+    const IFont::BLOCK *blocks() const override
     {
         return _blocks;
     }
-} ;
+    const uint8_t *bitmaps() const override
+    {
+        return _bitmaps;
+    }
+};
 */
 
 enum class FontMode

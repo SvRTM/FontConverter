@@ -1,5 +1,5 @@
-#ifndef SYMBOLINFO_H
-#define SYMBOLINFO_H
+#ifndef SYMBOLWIDGET_H
+#define SYMBOLWIDGET_H
 
 #include <QWidget>
 
@@ -29,4 +29,4 @@ class SymbolWidget : public QWidget
     public slots:
 };
 
-#endif // SYMBOLINFO_H
+#endif // SYMBOLWIDGET_H

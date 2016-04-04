@@ -152,7 +152,8 @@ QPair<int, int> MainWindow::viewSymbol(int row, int zoom)
     QImage::Format format = QImage::Format_Grayscale8;
     if (QFont::NoAntialias & m_font.styleStrategy())
         format = QImage::Format_Mono;
-    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format, Qt::AvoidDither));
+    pixmap = QPixmap::fromImage(pixmap.toImage().convertToFormat(format,
+                                                                 Qt::AvoidDither));
 
     size.first = pixmap.width();
     int width = size.first * zoom;
@@ -196,9 +197,15 @@ void MainWindow::tableSelection(const QItemSelection &selected,
     ui->symbolWidget->drawSize(size.first, size.second);
 }
 
+void MainWindow::on_updateTbl_clicked()
+{
+    prepareTable(m_font);
+}
+
 void MainWindow::prepareTable(QFont &font)
 {
-    QModelIndexList selections = ui->listCharacters->selectionModel()->selectedRows();
+    QModelIndexList selections =
+        ui->listCharacters->selectionModel()->selectedRows();
     if (selections.size() == 0)
     {
         ui->symbolTable->model()->clear();
@@ -210,7 +217,10 @@ void MainWindow::prepareTable(QFont &font)
     int selRow = -1;
     QItemSelectionModel *selModel = ui->symbolTable->selectionModel();
     if (selModel->hasSelection())
+    {
         selRow = selModel->selectedRows()[0].row();
+        selModel->clearSelection();
+    }
 
     ui->graphicsView->scene()->clear();
 

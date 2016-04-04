@@ -7,6 +7,7 @@ const char *IFontExport::saveIFont()
         "#define IFONT_H_\n"
         "\n"
         "#include <stdint.h>\n"
+        "#include <cstddef>\n"
         "\n"
         "struct IFont\n"
         "{\n"
@@ -17,8 +18,8 @@ const char *IFontExport::saveIFont()
         "    };\n"
         "\n"
         "\n"
-        "    IFont(uint8_t _height, uint8_t _sizeOfBlock, Mode _mode)\n"
-        "            : height(_height), sizeOfBlock(_sizeOfBlock), mode(_mode) {}\n"
+        "    explicit IFont(uint8_t _height, uint8_t _sizeOfBlock, Mode _mode)\n"
+        "        : height(_height), sizeOfBlock(_sizeOfBlock), mode(_mode) {}\n"
         "\n"
         "\n"
         "    struct CHAR_INFO\n"
@@ -41,8 +42,22 @@ const char *IFontExport::saveIFont()
         "\n"
         "    virtual const BLOCK *blocks()    const = 0;\n"
         "    virtual const uint8_t *bitmaps() const = 0;\n"
+        "\n"
+        "    static inline const IFont::CHAR_INFO *const descriptor(const wchar_t ch, const IFont &font);\n"
         "};\n"
         "\n"
+        "const IFont::CHAR_INFO *const IFont::descriptor(const wchar_t ch, const IFont &font)\n"
+        "{\n"
+        "    for (size_t n = 0; n < font.sizeOfBlock; ++n)\n"
+        "    {\n"
+        "        const IFont::BLOCK *const block = &font.blocks()[n];\n"
+        "        if (ch >= block->startChar && ch <= block->endChar)\n"
+        "            return &block->descriptors[ch - block->startChar];\n"
+        "    }\n"
+        "\n"
+        "    const IFont::BLOCK *const block = &font.blocks()[font.sizeOfBlock - 1];\n"
+        "    return &block->descriptors[0];\n"
+        "}\n"
         "\n"
         "#endif /* IFONT_H_ */"
         "\n";
@@ -116,6 +131,24 @@ QString IFontExport::process()
 
     if (Mode::M1 == mode)
         in  << "#include <stdint.h>\n"
+            "\n"
+            "\n"
+            "/*\n"
+            "#include <cstddef>\n"
+            "const <FONT>::CHAR_INFO *const descriptor(const wchar_t ch, const <FONT> &font)\n"
+            "{\n"
+            "    const uint8_t sizeOfBlock = sizeof(<FONT>::blocks) / sizeof(<FONT>::blocks[0]);\n"
+            "    for (size_t n = 0; n < sizeOfBlock; ++n)\n"
+            "    {\n"
+            "        const <FONT>::BLOCK *const block = &font.blocks[n];\n"
+            "        if (ch >= block->startChar && ch <= block->endChar)\n"
+            "            return &block->descriptors[ch - block->startChar];\n"
+            "    }\n"
+            "\n"
+            "    const <FONT>::BLOCK *const block = &font.blocks[sizeOfBlock - 1];\n"
+            "    return &block->descriptors[0];\n"
+            "}\n"
+            "*/\n"
             "\n"
             "struct " << fontName << "\n"
             "{\n"
@@ -370,7 +403,7 @@ quint8 GrayscaleColor::lastRow(const QImage &image, QByteArray &bytes,
     while (lstRow != 0);
 
     empty = true;
-    return lstRow;
+    return image.height() - 1;
 }
 
 void GrayscaleColor::toString(const QByteArray &byte, QTextStream &stream)
