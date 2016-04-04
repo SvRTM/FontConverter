@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->updateTbl->setDisabled(true);
 
     QList<int> sizes;
     sizes << 380 << 768;
@@ -298,6 +299,8 @@ void MainWindow::prepareTable(QFont &font)
     ui->symbolTable->resizeRowsToContents();
 
     emit ui->symbolTable->selectRow(selRow);
+
+    ui->updateTbl->setDisabled(false);
 }
 
 void MainWindow::drawUnknowSymbol(QPainter &painter, int height, int width)
