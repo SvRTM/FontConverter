@@ -40,6 +40,7 @@ CodeNumbers::CodeNumbers ()
     operator[](UnknownSymbol) = QChar(0xFFFF);
 }
 
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
@@ -49,53 +50,60 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     sizes << 380 << 768;
     ui->splitter->setSizes(sizes);
 
-    createToolBar();
+    prepareToolBar();
     createStatusBar();
 
     createSelectionModel();
 
-    ui->graphicsView->setAlignment(Qt::AlignCenter);
-    ui->graphicsView->setScene(new QGraphicsScene(this));
-    connect(ui->symbolWidget, &SymbolWidget::valueChanged, [&] (int value)
-    {
-        ui->graphicsView->scene()->clear();
-        int row = ui->symbolTable->selectionModel()->currentIndex().row();
-        viewSymbol(row, value);
-    });
+    prepareGraphicsView();
 
+    prepareListCharacters();
 
-    QStandardItemModel *listModel = new QStandardItemModel(ui->listCharacters);
-    ui->listCharacters->setModel(listModel);
-
-    const QListView *pListView = ui->listCharacters;
-    connect(listModel, &QStandardItemModel::itemChanged, [pListView, listModel]
-            (QStandardItem * item)
-    {
-        const QModelIndex index = listModel->indexFromItem(item);
-        QItemSelectionModel *selModel = pListView->selectionModel();
-        selModel->select(QItemSelection(index, index),
-                         item->checkState () == Qt::Checked ?
-                         QItemSelectionModel::Select :
-                         QItemSelectionModel::Deselect);
-    });
-    connect (ui->listCharacters->selectionModel(),
-             &QItemSelectionModel::selectionChanged,
-             [listModel](const QItemSelection & selected, const QItemSelection & deselected)
-    {
-        for (const QModelIndex &index : selected.indexes())
-            listModel->itemFromIndex(index)->setCheckState(Qt::Checked);
-        for (const QModelIndex &index : deselected.indexes())
-            listModel->itemFromIndex(index)->setCheckState(Qt::Unchecked);
-    });
-    prepareCodeNumbersList(listModel);
-
-    disableAction(true);
+    cleareScene(true);
     setStyleStrategy(QFont::NoAntialias);
 }
 MainWindow::~MainWindow ()
 {
     ui->symbolTable->clearSelection();
     delete ui;
+}
+
+void MainWindow::prepareToolBar()
+{
+    ui->mainToolBar->addAction(ui->actionImportFont);
+    ui->mainToolBar->addAction(ui->actionExportFontC);
+}
+
+void MainWindow::createStatusBar()
+{
+    QLabel *lb = new QLabel("Font name: ", statusBar());
+    lb->setAlignment(Qt::AlignLeading);
+    statusBar()->addWidget(lb);
+    sbFontName = new QLabel(statusBar());
+    statusBar()->addWidget(sbFontName);
+
+    statusBar()->addWidget(separator());
+
+    lb = new QLabel("Font size: ", statusBar());
+    lb->setAlignment(Qt::AlignLeading);
+    statusBar()->addWidget(lb);
+    sbFontSize = new QLabel(statusBar());
+    statusBar()->addWidget(sbFontSize);
+
+    statusBar()->addWidget(separator());
+
+    statusBar()->addWidget(new QLabel("Font style:", statusBar()));
+
+    sbFontStyleName = new QLabel(statusBar());
+    sbFontStyleName->setAlignment(Qt::AlignLeading);
+    statusBar()->addWidget(sbFontStyleName);
+
+    statusBar()->addWidget(separator());
+
+    sbFontStyleStrategy = new QLabel("Antialias", statusBar());
+    sbFontStyleStrategy->setAlignment(Qt::AlignLeading);
+    sbFontStyleStrategy->setVisible(false);
+    statusBar()->addWidget(sbFontStyleStrategy);
 }
 
 void MainWindow::createSelectionModel() const
@@ -106,41 +114,37 @@ void MainWindow::createSelectionModel() const
     connect(selectionModel, &QItemSelectionModel::selectionChanged, this,
             &MainWindow::tableSelection);
 }
-
-void MainWindow::prepareCodeNumbersList(QStandardItemModel *listModel)
+void MainWindow::tableSelection(const QItemSelection &selected,
+                                const QItemSelection &deselected)
 {
-    listModel->setItem(CodeNumbers::LatinLetters,
-                       createCodeListItem("[A-z]"));
-    listModel->setItem(CodeNumbers::CyrillicLetters,
-                       createCodeListItem("[А-я]"));
-    listModel->setItem(CodeNumbers::Numbers,
-                       createCodeListItem("[0-9]"));
-    listModel->setItem(CodeNumbers::LatinSupplement,
-                       createCodeListItem(m_codeNumbers[CodeNumbers::LatinSupplement]));
-    listModel->setItem(CodeNumbers::Arrows,
-                       createCodeListItem("Arrows"));
-    listModel->setItem(CodeNumbers::BoxDrawing,
-                       createCodeListItem("Box drawing", Qt::Unchecked));
-    listModel->setItem(CodeNumbers::BlockElements,
-                       createCodeListItem("Block elements", Qt::Unchecked));
-    listModel->setItem(CodeNumbers::GeometricShapes,
-                       createCodeListItem("Geometric shapes", Qt::Unchecked));
-    listModel->setItem(CodeNumbers::MiscellanepousSymbols,
-                       createCodeListItem("Miscellanepous symbols", Qt::Unchecked));
-    //
-    listModel->setItem(CodeNumbers::UnknownSymbol,
-                       createCodeListItem("Unknown symbol", Qt::Checked));
+    ui->graphicsView->scene()->clear();
+
+    int row;
+    if (!selected.isEmpty())
+        row = selected.indexes()[0].row();
+    else if (!deselected.isEmpty())
+        row = deselected.indexes()[0].row();
+    else
+    {
+        ui->symbolWidget->drawSize();
+        return;
+    }
+
+    QPair<int, int> size = viewSymbol(row, ui->symbolWidget->zoom());
+    ui->symbolWidget->drawSize(size.first, size.second);
 }
 
-QStandardItem *MainWindow::createCodeListItem(QString txt, Qt::CheckState state)
+void MainWindow::prepareGraphicsView()
 {
-    QStandardItem *listItem = new QStandardItem(txt);
-    listItem->setCheckable(true);
-    listItem->setData(Qt::Unchecked, Qt::CheckStateRole);
-    listItem->setCheckState(state);
-    return listItem;
+    ui->graphicsView->setAlignment(Qt::AlignCenter);
+    ui->graphicsView->setScene(new QGraphicsScene(this));
+    connect(ui->symbolWidget, &SymbolWidget::valueChanged, [&] (int value)
+    {
+        ui->graphicsView->scene()->clear();
+        int row = ui->symbolTable->selectionModel()->currentIndex().row();
+        viewSymbol(row, value);
+    });
 }
-
 QPair<int, int> MainWindow::viewSymbol(int row, int zoom)
 {
     QPair<int, int> size(0, 0);
@@ -177,25 +181,67 @@ QPair<int, int> MainWindow::viewSymbol(int row, int zoom)
     return size;
 }
 
-void MainWindow::tableSelection(const QItemSelection &selected,
-                                const QItemSelection &deselected)
+void MainWindow::prepareListCharacters()
 {
-    ui->graphicsView->scene()->clear();
+    QStandardItemModel *listModel = new QStandardItemModel(ui->listCharacters);
+    ui->listCharacters->setModel(listModel);
 
-    int row;
-    if (!selected.isEmpty())
-        row = selected.indexes()[0].row();
-    else if (!deselected.isEmpty())
-        row = deselected.indexes()[0].row();
-    else
+    const QListView *pListView = ui->listCharacters;
+    connect(listModel, &QStandardItemModel::itemChanged, [pListView, listModel]
+            (QStandardItem * item)
     {
-        ui->symbolWidget->drawSize();
-        return;
-    }
-
-    QPair<int, int> size = viewSymbol(row, ui->symbolWidget->zoom());
-    ui->symbolWidget->drawSize(size.first, size.second);
+        const QModelIndex index = listModel->indexFromItem(item);
+        QItemSelectionModel *selModel = pListView->selectionModel();
+        selModel->select(QItemSelection(index, index),
+                         item->checkState () == Qt::Checked ?
+                         QItemSelectionModel::Select :
+                         QItemSelectionModel::Deselect);
+    });
+    connect (ui->listCharacters->selectionModel(),
+             &QItemSelectionModel::selectionChanged,
+             [listModel](const QItemSelection & selected, const QItemSelection & deselected)
+    {
+        for (const QModelIndex &index : selected.indexes())
+            listModel->itemFromIndex(index)->setCheckState(Qt::Checked);
+        for (const QModelIndex &index : deselected.indexes())
+            listModel->itemFromIndex(index)->setCheckState(Qt::Unchecked);
+    });
+    prepareCodeNumbersList(listModel);
 }
+void MainWindow::prepareCodeNumbersList(QStandardItemModel *listModel)
+{
+    listModel->setItem(CodeNumbers::LatinLetters,
+                       createCodeListItem("[A-z]"));
+    listModel->setItem(CodeNumbers::CyrillicLetters,
+                       createCodeListItem("[А-я]"));
+    listModel->setItem(CodeNumbers::Numbers,
+                       createCodeListItem("[0-9]"));
+    listModel->setItem(CodeNumbers::LatinSupplement,
+                       createCodeListItem(m_codeNumbers[CodeNumbers::LatinSupplement]));
+    listModel->setItem(CodeNumbers::Arrows,
+                       createCodeListItem("Arrows"));
+    listModel->setItem(CodeNumbers::BoxDrawing,
+                       createCodeListItem("Box drawing", Qt::Unchecked));
+    listModel->setItem(CodeNumbers::BlockElements,
+                       createCodeListItem("Block elements", Qt::Unchecked));
+    listModel->setItem(CodeNumbers::GeometricShapes,
+                       createCodeListItem("Geometric shapes", Qt::Unchecked));
+    listModel->setItem(CodeNumbers::MiscellanepousSymbols,
+                       createCodeListItem("Miscellanepous symbols", Qt::Unchecked));
+    //
+    listModel->setItem(CodeNumbers::UnknownSymbol,
+                       createCodeListItem("Unknown symbol", Qt::Checked));
+}
+QStandardItem *MainWindow::createCodeListItem(QString txt, Qt::CheckState state)
+{
+    QStandardItem *listItem = new QStandardItem(txt);
+    listItem->setCheckable(true);
+    listItem->setData(Qt::Unchecked, Qt::CheckStateRole);
+    listItem->setCheckState(state);
+    return listItem;
+}
+// #################################################################
+// #################################################################
 
 void MainWindow::on_updateTbl_clicked()
 {
@@ -210,19 +256,15 @@ void MainWindow::prepareTable(QFont &font)
     {
         ui->symbolTable->model()->clear();
         ui->symbolWidget->drawSize();
-        disableAction(true);
+        cleareScene(true);
         return;
     }
 
     int selRow = -1;
     QItemSelectionModel *selModel = ui->symbolTable->selectionModel();
     if (selModel->hasSelection())
-    {
         selRow = selModel->selectedRows()[0].row();
-        selModel->clearSelection();
-    }
-
-    ui->graphicsView->scene()->clear();
+    cleareScene(false);
 
     sbFontStyleName->setText(font.styleName());
     sbFontName->setText(font.family());
@@ -267,57 +309,19 @@ void MainWindow::drawUnknowSymbol(QPainter &painter, int height, int width)
     painter.drawLine(1, width - 1 + c - 1, width - 1 - 1, c + 1);
 }
 
-void MainWindow::createToolBar()
-{
-    ui->mainToolBar->addAction(ui->actionImportFont);
-    ui->mainToolBar->addAction(ui->actionExportFontC);
-}
-
-void MainWindow::createStatusBar()
-{
-    QLabel *lb = new QLabel("Font name: ", statusBar());
-    lb->setAlignment(Qt::AlignLeading);
-    statusBar()->addWidget(lb);
-    sbFontName = new QLabel(statusBar());
-    statusBar()->addWidget(sbFontName);
-
-    statusBar()->addWidget(separator());
-
-    lb = new QLabel("Font size: ", statusBar());
-    lb->setAlignment(Qt::AlignLeading);
-    statusBar()->addWidget(lb);
-    sbFontSize = new QLabel(statusBar());
-    statusBar()->addWidget(sbFontSize);
-
-    statusBar()->addWidget(separator());
-
-    statusBar()->addWidget(new QLabel("Font style:", statusBar()));
-
-    sbFontStyleName = new QLabel(statusBar());
-    sbFontStyleName->setAlignment(Qt::AlignLeading);
-    statusBar()->addWidget(sbFontStyleName);
-
-    statusBar()->addWidget(separator());
-
-    sbFontStyleStrategy = new QLabel("Antialias", statusBar());
-    sbFontStyleStrategy->setAlignment(Qt::AlignLeading);
-    sbFontStyleStrategy->setVisible(false);
-    statusBar()->addWidget(sbFontStyleStrategy);
-}
-
 void MainWindow::setStyleStrategy(QFont::StyleStrategy styleStrategy)
 {
     m_font.setStyleStrategy((QFont::StyleStrategy) (m_font.styleStrategy() ^
                                                     styleStrategy));
 }
 
-void MainWindow::disableAction(bool disable)
+void MainWindow::cleareScene(bool cleare)
 {
     ui->symbolTable->clearSelection();
     ui->graphicsView->scene()->clear();
 
-    ui->actionExportFontC->setEnabled(!disable);
-    ui->actionNoAntialias->setEnabled(!disable);
+    ui->actionExportFontC->setEnabled(!cleare);
+    ui->actionNoAntialias->setEnabled(!cleare);
 }
 
 void MainWindow::on_actionImportFont_triggered()
@@ -330,7 +334,6 @@ void MainWindow::on_actionImportFont_triggered()
         return;
 
     prepareTable(m_font);
-    disableAction(false);
 }
 
 void MainWindow::on_actionExportFontC_triggered()

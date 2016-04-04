@@ -368,7 +368,7 @@ QByteArray GrayscaleColor::scanLine(const quint8 index,
 
 quint8 GrayscaleColor::firstRow(const QImage &image, QByteArray &bytes)
 {
-    const QByteArray EMPTY_LINE(image.width(), 255);
+    const QByteArray EMPTY_LINE(image.width(), uint8_t(255));
 
     const quint8 height = image.height() - 1;
     quint8 fstRow = 0;
@@ -387,7 +387,7 @@ quint8 GrayscaleColor::firstRow(const QImage &image, QByteArray &bytes)
 quint8 GrayscaleColor::lastRow(const QImage &image, QByteArray &bytes,
                                bool &empty)
 {
-    const QByteArray EMPTY_LINE(image.width(), 255);
+    const QByteArray EMPTY_LINE(image.width(), uint8_t(255));
 
     quint8 lstRow = image.height() - 1;
     do

@@ -55,10 +55,14 @@ class MainWindow : public QMainWindow
         void changeEvent(QEvent *e);
 
     private:
-        void createToolBar();
+        void prepareToolBar();
         void createStatusBar();
         void createSelectionModel() const;
 
+        void prepareGraphicsView();
+        QPair<int, int> viewSymbol(int row, int zoom);
+
+        void prepareListCharacters();
         void prepareCodeNumbersList(QStandardItemModel *listModel);
         QStandardItem *createCodeListItem(QString txt, Qt::CheckState state = Qt::Checked);
 
@@ -66,9 +70,8 @@ class MainWindow : public QMainWindow
         void drawUnknowSymbol(QPainter &painter, int height, int width);
         void setStyleStrategy(QFont::StyleStrategy styleStrategy);
 
-        QPair<int, int> viewSymbol(int row, int zoom);
+        void cleareScene(bool cleare);
 
-        void disableAction(bool disable);
         QFrame *separator()
         {
             QFrame *line = new QFrame(this);
