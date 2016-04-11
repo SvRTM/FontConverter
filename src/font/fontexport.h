@@ -8,7 +8,7 @@
 #include <QBitArray>
 #include <QByteArray>
 #include <QImage>
-
+#include <QPair>
 
 /*
 /#############################/
@@ -18,17 +18,17 @@ struct Tinos_11pt_Italic
 {
     const uint8_t    height        = 16;
 
-    const struct CHAR_INFO
+    static constexpr struct CHAR_INFO
     {
         const uint8_t   fstRow;
         const uint8_t   sizeRow;
         const uint8_t   width;
         const uint8_t position;
     } descriptors[1] = {
-             {2, 12, 12, 0}		// '￿'	[65535]
+             {2, 12, 12, 0}     // '￿'    [65535]
        };
 
-    const struct BLOCK
+    static constexpr struct BLOCK
     {
         const uint16_t    startChar;
         const uint16_t    endChar;
@@ -37,7 +37,7 @@ struct Tinos_11pt_Italic
              {65535, 65535, &descriptors[0]}
        };
 
-    const uint8_t bitmaps[24] = {...};
+    static constexpr uint8_t bitmaps[24] = {...};
 };
 
 
@@ -96,13 +96,13 @@ struct Tinos_11pt_Italic : IFont
 {
     Tinos_11pt_Italic() : IFont(16, 1, Mode::Bitmap) {}
 
-    const CHAR_INFO descriptors[1] = {
-             {2, 12, 12, 0}		// '￿'	[65535]
+    static constexpr CHAR_INFO descriptors[1] = {
+             {2, 12, 12, 0}     // '￿'    [65535]
     };
-    const BLOCK _blocks[1] = {
+    static constexpr BLOCK _blocks[1] = {
              {65535, 65535, &descriptors[0]}
     };
-    const uint8_t _bitmaps[24] = {...};
+    static constexpr uint8_t _bitmaps[24] = {...};
 
     const IFont::BLOCK *blocks() const override
     {
@@ -150,12 +150,12 @@ class IFontExport
                              const FontMode _fontMode);
         virtual ~IFontExport() {}
 
-        QString process();
+        QPair<QString, QString> process();
         static const char *saveIFont() ;
 
     private:
         virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
-                                                  QTextStream &bitmaps) = 0;
+                QTextStream &bitmaps) = 0;
 
         void prepareCharInfo(const QChar ch, const CHAR_INFO &smb, QTextStream &stream,
                              bool latch) const
@@ -219,7 +219,7 @@ class BitColor final : public IFontExport
         }
 
         virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
-                                                  QTextStream &bitmaps) override;
+                QTextStream &bitmaps) override;
     private:
         const CxxStandart cxx;
 };
@@ -243,7 +243,7 @@ class GrayscaleColor : public IFontExport
         void toString(const QByteArray &byte, QTextStream &stream);
 
         virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
-                                                  QTextStream &bitmaps) override;
+                QTextStream &bitmaps) override;
 };
 
 

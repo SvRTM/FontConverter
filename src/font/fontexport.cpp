@@ -73,14 +73,14 @@ IFontExport::IFontExport(const QString &_fontName,
 {
 }
 
-QString IFontExport::process()
+QPair<QString, QString> IFontExport::process()
 {
     QString strBitmap, strSymbol, strBlock;
     QTextStream streamBitmap(&strBitmap), streamSymbol(&strSymbol),
                 streamBlock(&strBlock);
 
-    std::sort(items.begin(), items.end(), [] (const SymbolTableItem * const a,
-                                              const SymbolTableItem * const b) -> bool
+    std::sort(items.begin(), items.end(),
+              [] (const SymbolTableItem * const a, const SymbolTableItem * const b) -> bool \
     {
         return a->numericUnicode() < b->numericUnicode();
     });
@@ -123,96 +123,114 @@ QString IFontExport::process()
     prepareBlock(startChar, prevChar, nDescriptor, streamBlock, false);
 
     QString upFName = fontName.toUpper();
-    QString fontStruct;
-    QTextStream in(&fontStruct);
-    in << "#ifndef " << upFName << "_H_\n"
-       "#define " << upFName << "_H_\n"
-       "\n";
+    QString hStr, cppStr;
+    QTextStream hFile(&hStr), cppFile(&cppStr);
+    cppFile << "#include \"" << fontName << ".h\"\n"
+            "\n";
+    hFile << "#ifndef " << upFName << "_H_\n"
+          "#define " << upFName << "_H_\n"
+          "\n";
 
     if (Mode::M1 == mode)
-        in  << "#include <stdint.h>\n"
-            "\n"
-            "\n"
-            "/*\n"
-            "#include <cstddef>\n"
-            "const <FONT>::CHAR_INFO *const descriptor(const wchar_t ch, const <FONT> &font)\n"
-            "{\n"
-            "    const uint8_t sizeOfBlock = sizeof(<FONT>::blocks) / sizeof(<FONT>::blocks[0]);\n"
-            "    for (size_t n = 0; n < sizeOfBlock; ++n)\n"
-            "    {\n"
-            "        const <FONT>::BLOCK *const block = &font.blocks[n];\n"
-            "        if (ch >= block->startChar && ch <= block->endChar)\n"
-            "            return &block->descriptors[ch - block->startChar];\n"
-            "    }\n"
-            "\n"
-            "    const <FONT>::BLOCK *const block = &font.blocks[sizeOfBlock - 1];\n"
-            "    return &block->descriptors[0];\n"
-            "}\n"
-            "*/\n"
-            "\n"
-            "struct " << fontName << "\n"
-            "{\n"
-            "    const uint8_t    height        = " << height << ";\n"
-            "\n"
-            "    const struct CHAR_INFO\n"
-            "    {\n"
-            "        const uint8_t   fstRow;\n"
-            "        const uint8_t   sizeRow;\n"
-            "        const uint8_t   width;\n"
-            "        const " << size_t_PosBimap(sizeBitmap) << " position;\n"
-            "    } descriptors[" << items.size() << "] = {\n"
-            "             " << strSymbol << "\n"
-            "       };\n"
-            "\n"
-            "    const struct BLOCK\n"
-            "    {\n"
-            "        const uint16_t    startChar;\n"
-            "        const uint16_t    endChar;\n"
-            "        const CHAR_INFO *descriptors;\n"
-            "    } blocks[" << sizeBlocks + 1 << "] = {\n" <<
-            strBlock << "\n"
-            "       };\n"
-            "\n"
-            "    const uint8_t bitmaps[" << sizeBitmap << "] = {\n" <<
-            strBitmap << "\n"
-            "    };\n"
-            "};";
+    {
+        cppFile << ""
+                "constexpr " << fontName << "::CHAR_INFO " << fontName << "::descriptors[" << items.size()
+                << "];\n"
+                "constexpr " << fontName << "::BLOCK " << fontName << "::blocks[" << sizeBlocks + 1 <<
+                "];\n"
+                "constexpr uint8_t " << fontName << "::bitmaps[" << sizeBitmap << "];\n";
+
+        hFile  << "#include <stdint.h>\n"
+               "\n"
+               "\n"
+               "/*\n"
+               "#include <cstddef>\n"
+               "const <FONT>::CHAR_INFO *const descriptor(const wchar_t ch, const <FONT> &font)\n"
+               "{\n"
+               "    const uint8_t sizeOfBlock = sizeof(<FONT>::blocks) / sizeof(<FONT>::blocks[0]);\n"
+               "    for (size_t n = 0; n < sizeOfBlock; ++n)\n"
+               "    {\n"
+               "        const <FONT>::BLOCK *const block = &font.blocks[n];\n"
+               "        if (ch >= block->startChar && ch <= block->endChar)\n"
+               "            return &block->descriptors[ch - block->startChar];\n"
+               "    }\n"
+               "\n"
+               "    const <FONT>::BLOCK *const block = &font.blocks[sizeOfBlock - 1];\n"
+               "    return &block->descriptors[0];\n"
+               "}\n"
+               "*/\n"
+               "\n"
+               "struct " << fontName << "\n"
+               "{\n"
+               "    static constexpr uint8_t    height        = " << height << ";\n"
+               "\n"
+               "    static constexpr struct CHAR_INFO\n"
+               "    {\n"
+               "        const uint8_t   fstRow;\n"
+               "        const uint8_t   sizeRow;\n"
+               "        const uint8_t   width;\n"
+               "        const " << size_t_PosBimap(sizeBitmap) << " position;\n"
+               "    } descriptors[" << items.size() << "] = {\n"
+               "             " << strSymbol << "\n"
+               "       };\n"
+               "\n"
+               "    static constexpr struct BLOCK\n"
+               "    {\n"
+               "        const uint16_t    startChar;\n"
+               "        const uint16_t    endChar;\n"
+               "        const CHAR_INFO *descriptors;\n"
+               "    } blocks[" << sizeBlocks + 1 << "] = {\n" <<
+               strBlock << "\n"
+               "       };\n"
+               "\n"
+               "    static constexpr uint8_t bitmaps[" << sizeBitmap << "] = {\n" <<
+               strBitmap << "\n"
+               "    };\n"
+               "};";
+    }
     /* ################################### */
     else // Mode::M2
-        in << "#include \"ifont.h\"\n"
-           "\n"
-           "struct " << fontName << " : IFont\n"
-           "{\n"
-           "    " << fontName << "() : IFont(" << height << ", " << sizeBlocks + 1 <<
-           ", Mode::" << (FontMode::Bitmap == fontMode ? "Bitmap" :  "Antialias") <<
-           ") {}\n"
-           "\n"
-           "    const CHAR_INFO descriptors[" << items.size() << "] = {\n"
-           "             " << strSymbol << "\n"
-           "    };\n"
-           "    const BLOCK _blocks[" << sizeBlocks + 1 << "] = {\n" <<
-           strBlock << "\n"
-           "    };\n"
-           "    const uint8_t _bitmaps[" << sizeBitmap << "] = {\n" <<
-           strBitmap << "\n"
-           "    };\n"
-           "\n"
-           "    const IFont::BLOCK *blocks() const override\n"
-           "    {\n"
-           "        return _blocks;\n"
-           "    }\n"
-           "    const uint8_t *bitmaps() const override\n"
-           "    {\n"
-           "        return _bitmaps;\n"
-           "    }\n"
-           "};\n";
+    {
+        cppFile << ""
+                "constexpr IFont::CHAR_INFO " << fontName << "::descriptors[" << items.size() << "];\n"
+                "constexpr IFont::BLOCK " << fontName << "::_blocks[" << sizeBlocks + 1 << "];\n"
+                "constexpr uint8_t " << fontName << "::_bitmaps[" << sizeBitmap << "];\n";
 
-    in  << "\n"
-        "\n"
-        "#endif /* " <<  fontName << "_H_ */"
-        "\n";
+        hFile << "#include \"ifont.h\"\n"
+              "\n"
+              "struct " << fontName << " : IFont\n"
+              "{\n"
+              "    " << fontName << "() : IFont(" << height << ", " << sizeBlocks + 1 <<
+              ", Mode::" << (FontMode::Bitmap == fontMode ? "Bitmap" :  "Antialias") <<
+              ") {}\n"
+              "\n"
+              "    static constexpr CHAR_INFO descriptors[" << items.size() << "] = {\n"
+              "             " << strSymbol << "\n"
+              "    };\n"
+              "    static constexpr BLOCK _blocks[" << sizeBlocks + 1 << "] = {\n" <<
+              strBlock << "\n"
+              "    };\n"
+              "    static constexpr uint8_t _bitmaps[" << sizeBitmap << "] = {\n" <<
+              strBitmap << "\n"
+              "    };\n"
+              "\n"
+              "    const IFont::BLOCK *blocks() const override\n"
+              "    {\n"
+              "        return _blocks;\n"
+              "    }\n"
+              "    const uint8_t *bitmaps() const override\n"
+              "    {\n"
+              "        return _bitmaps;\n"
+              "    }\n"
+              "};\n";
+    }
+    cppFile << "\n";
+    hFile  << "\n"
+           "\n"
+           "#endif /* " <<  fontName << "_H_ */"
+           "\n";
 
-    return fontStruct;
+    return  qMakePair(cppStr, hStr);
 }
 
 // ###########################################################
@@ -309,7 +327,7 @@ QString BitColor::toString(const QBitArray &bit, QTextStream &stream)
 }
 
 IFontExport::CHAR_INFO BitColor::prepareBitmaps_CharInfo(const QImage &image,
-                                                         QTextStream &bitmaps)
+        QTextStream &bitmaps)
 {
     quint16 size = 0;
 
