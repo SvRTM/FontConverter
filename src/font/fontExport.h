@@ -1,7 +1,7 @@
 #ifndef FONTEXPORT_H
 #define FONTEXPORT_H
 
-#include "../Widgets/symboltableitem.h"
+#include "Widgets/characterInfoTableItem.h"
 
 #include <QList>
 #include <QTextStream>
@@ -124,6 +124,8 @@ enum class FontMode
 class IFontExport
 {
     public:
+        static const char *saveIFont() ;
+
         enum class CxxStandart
         {
             Cxx11,
@@ -136,7 +138,7 @@ class IFontExport
         };
 
     protected:
-        struct CHAR_INFO
+        struct CHAR_INFO final
         {
             const quint8 fstRow;
             const quint8 sizeRow;
@@ -145,17 +147,15 @@ class IFontExport
         };
 
     public:
-        explicit IFontExport(const QString &fontName, QList<SymbolTableItem *> items,
-                             const QImage::Format _format, const Mode _mode,
-                             const FontMode _fontMode);
+        explicit IFontExport(const QString &fontName, QList<CharacterInfoTableItem *> items,
+                             const QImage::Format format, const Mode mode, const FontMode fontMode);
         virtual ~IFontExport() {}
 
+    public:
         QPair<QString, QString> process();
-        static const char *saveIFont() ;
 
     private:
-        virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
-                QTextStream &bitmaps) = 0;
+        virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image, QTextStream &bitmaps) = 0;
 
         void prepareCharInfo(const QChar ch, const CHAR_INFO &smb, QTextStream &stream,
                              bool latch) const
@@ -187,7 +187,7 @@ class IFontExport
 
     protected:
         const QString &fontName;
-        QList<SymbolTableItem *> items;
+        QList<CharacterInfoTableItem *> items;
         const QImage::Format format;
         const Mode mode;
         const FontMode fontMode;
@@ -199,12 +199,10 @@ class IFontExport
 class BitColor final : public IFontExport
 {
     public:
-        explicit BitColor(const QString &fontName, QList<SymbolTableItem *> items,
-                          const Mode _mode, const CxxStandart _cxx)
-            : IFontExport(fontName, items, QImage::Format_Mono, _mode, FontMode::Bitmap),
-              cxx(_cxx)
-        {
-        }
+        explicit BitColor(const QString &fontName, QList<CharacterInfoTableItem *> items,
+                          const Mode mode, const CxxStandart cxx)
+            : IFontExport(fontName, items, QImage::Format_Mono, mode, FontMode::Bitmap)
+            , cxx(cxx) {}
 
     private:
         QBitArray scanLine(const quint8 index, const QImage &image) const;
@@ -220,19 +218,17 @@ class BitColor final : public IFontExport
 
         virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
                 QTextStream &bitmaps) override;
+
     private:
         const CxxStandart cxx;
 };
 
-class GrayscaleColor : public IFontExport
+class GrayscaleColor final : public IFontExport
 {
     public:
-        explicit GrayscaleColor(const QString &fontName, QList<SymbolTableItem *> items,
-                                const Mode _mode)
-            : IFontExport(fontName, items, QImage::Format_Grayscale8, _mode,
-                          FontMode::Antialias)
-        {
-        }
+        explicit GrayscaleColor(const QString &fontName, QList<CharacterInfoTableItem *> items,
+                                const Mode mode)
+            : IFontExport(fontName, items, QImage::Format_Grayscale8, mode, FontMode::Antialias) {}
 
     private:
         QByteArray scanLine(const quint8 index, const QImage &image) const;
@@ -245,6 +241,5 @@ class GrayscaleColor : public IFontExport
         virtual CHAR_INFO prepareBitmaps_CharInfo(const QImage &image,
                 QTextStream &bitmaps) override;
 };
-
 
 #endif // FONTEXPORT_H

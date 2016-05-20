@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1076</width>
-    <height>721</height>
+    <width>1044</width>
+    <height>689</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,47 +25,8 @@
       </property>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QGridLayout" name="gridLayout">
-        <item row="2" column="0">
-         <widget class="QPushButton" name="updateTbl">
-          <property name="text">
-           <string>Update</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="1" column="0" colspan="2">
-         <widget class="QListView" name="listCharacters">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>180</height>
-           </size>
-          </property>
-          <property name="editTriggers">
-           <set>QAbstractItemView::NoEditTriggers</set>
-          </property>
-          <property name="alternatingRowColors">
-           <bool>true</bool>
-          </property>
-          <property name="selectionMode">
-           <enum>QAbstractItemView::NoSelection</enum>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="0" colspan="2">
-         <widget class="SymbolTableView" name="symbolTable">
+         <widget class="CharacterInfoTableView" name="characterInfoTableView">
           <property name="editTriggers">
            <set>QAbstractItemView::NoEditTriggers</set>
           </property>
@@ -86,12 +47,61 @@
           </property>
          </widget>
         </item>
+        <item row="2" column="1">
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="2" column="0">
+         <widget class="QPushButton" name="updateTable">
+          <property name="text">
+           <string>Update</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>220</height>
+           </size>
+          </property>
+          <property name="tabPosition">
+           <enum>QTabWidget::South</enum>
+          </property>
+          <property name="tabShape">
+           <enum>QTabWidget::Rounded</enum>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="FixedCharactersPage" name="fixedCharacters">
+           <attribute name="title">
+            <string>Fixed characters</string>
+           </attribute>
+          </widget>
+          <widget class="SelectedCharactersPage" name="selectedCharacters">
+           <attribute name="title">
+            <string>Selected characters</string>
+           </attribute>
+          </widget>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="layoutWidget_2">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="SymbolWidget" name="symbolWidget" native="true"/>
+         <widget class="CharacterPropWidget" name="characterPropWidget" native="true"/>
         </item>
         <item>
          <widget class="QGraphicsView" name="graphicsView">
@@ -120,13 +130,13 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1076</width>
-     <height>23</height>
+     <width>1044</width>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>Font</string>
+     <string>F&amp;ont</string>
     </property>
     <addaction name="actionImportFont"/>
     <addaction name="actionExportFontC"/>
@@ -135,7 +145,7 @@
    </widget>
    <widget class="QMenu" name="menuFont">
     <property name="title">
-     <string>File</string>
+     <string>&amp;File</string>
     </property>
     <addaction name="actionExit"/>
    </widget>
@@ -156,12 +166,12 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionImportFont">
    <property name="text">
-    <string>Import existing system font</string>
+    <string>&amp;Import existing system font</string>
    </property>
   </action>
   <action name="actionExportFontC">
    <property name="text">
-    <string>Export the font as C file</string>
+    <string>&amp;Export the font as C file</string>
    </property>
   </action>
   <action name="actionNoAntialias">
@@ -172,12 +182,12 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>NoAntialias</string>
+    <string>&amp;NoAntialias</string>
    </property>
   </action>
   <action name="actionExit">
    <property name="text">
-    <string>exit</string>
+    <string>&amp;exit</string>
    </property>
    <property name="toolTip">
     <string>Exit</string>
@@ -187,14 +197,26 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>SymbolTableView</class>
-   <extends>QTableView</extends>
-   <header>Widgets/TableView/symboltableview.h</header>
+   <class>CharacterPropWidget</class>
+   <extends>QWidget</extends>
+   <header>Widgets/characterPropertyWidget.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
-   <class>SymbolWidget</class>
+   <class>SelectedCharactersPage</class>
    <extends>QWidget</extends>
-   <header>Widgets/symbolwidget.h</header>
+   <header>Widgets/Tab/selectedCharactersPage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CharacterInfoTableView</class>
+   <extends>QTableView</extends>
+   <header>Widgets/TableView/characterInfoTableView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>FixedCharactersPage</class>
+   <extends>QWidget</extends>
+   <header>Widgets/Tab/fixedCharactersPage.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

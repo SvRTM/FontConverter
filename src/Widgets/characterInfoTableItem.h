@@ -1,14 +1,13 @@
-#ifndef SYMBOLTABLEITEM_H
-#define SYMBOLTABLEITEM_H
+#ifndef CHARACTERINFOTABLEITEM_H
+#define CHARACTERINFOTABLEITEM_H
 
 #include <QVariant>
 #include <QPixmap>
 
-
-class SymbolTableItem final
+class CharacterInfoTableItem final
 {
     public:
-        explicit SymbolTableItem(quint16 numericUnicode, QPixmap charPixmap);
+        explicit CharacterInfoTableItem(quint16 numericUnicode, QPixmap charPixmap);
 
     public:
         QVariant charPixmap();
@@ -20,8 +19,10 @@ class SymbolTableItem final
         }
 
     private:
+        static constexpr quint8 zoom = 5;
+
         quint16 m_numericUnicode;
         QPixmap m_charPixmap;
 };
 
-#endif // SYMBOLTABLEITEM_H
+#endif // CHARACTERINFOTABLEITEM_H

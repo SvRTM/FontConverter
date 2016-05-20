@@ -12,6 +12,6 @@ CONFIG(debug, debug|release) {
 }
 
 VPATH += ./src
-INCLUDEPATH += src
+INCLUDEPATH += ./src
 
 include(src/FontConverter.pri)

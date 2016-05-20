@@ -1,40 +1,42 @@
-#include "exportdialog.h"
-#include "ui_export.h"
+#include "exportDialog.h"
+#include "ui_exportDialog.h"
 
 #include <QFileDialog>
 
 
-ExportDialog::ExportDialog(const FontInfo &_fontInfo,
-                           const QList<SymbolTableItem *> &_items, QWidget *parent)
-    : QDialog(parent), ui(new Ui::Export), fontInfo(_fontInfo), items(_items)
+ExportDialog::ExportDialog(const FontInfo &fontInfo,
+                           const QList<CharacterInfoTableItem *> &items, QWidget *pParent)
+    : QDialog(pParent), ui(new Ui::ExportDialog), fontInfo(fontInfo), items(items)
 {
-    ui->setupUi (this);
-    ui->fontName->setText(QString("%1%2_%3pt_%4").arg(_fontInfo.family)
-                          .arg(FontMode::Antialias == _fontInfo.mode ? "_AA" : nullptr)
-                          .arg(_fontInfo.poinSize).arg(_fontInfo.styleName)
+    ui->setupUi(this);
+    ui->fontName->setText(QString("%1%2_%3pt_%4")
+                          .arg(fontInfo.family)
+                          .arg(FontMode::Antialias == fontInfo.mode ? "_AA" : nullptr)
+                          .arg(fontInfo.pointSize)
+                          .arg(fontInfo.styleName)
                           .replace(" ", "_"));
 
     connect(ui->save, &QPushButton::clicked, this, &ExportDialog::save);
     connect(ui->cancel, &QPushButton::clicked, this, &ExportDialog::reject);
 
-    connect(ui->rbMode_1, &QRadioButton::clicked, this , [&] ()
+    connect(ui->rbMode_1, &QRadioButton::clicked, this, [&] ()
     {
         ui->saveIfont->setVisible(false);
         on_btUpdate_clicked();
     });
-    connect(ui->rbMode_2, &QRadioButton::clicked, this , [&] ()
+    connect(ui->rbMode_2, &QRadioButton::clicked, this, [&] ()
     {
         ui->saveIfont->setVisible(true);
         on_btUpdate_clicked();
     });
 
-    if (FontMode::Bitmap == _fontInfo.mode)
+    if (FontMode::Bitmap == fontInfo.mode)
     {
-        connect(ui->rbCxx11, &QRadioButton::clicked, this , [&] ()
+        connect(ui->rbCxx11, &QRadioButton::clicked, this, [&] ()
         {
             on_btUpdate_clicked();
         });
-        connect(ui->rbCxx14, &QRadioButton::clicked, this , [&] ()
+        connect(ui->rbCxx14, &QRadioButton::clicked, this, [&] ()
         {
             on_btUpdate_clicked();
         });
@@ -52,7 +54,7 @@ ExportDialog::~ExportDialog()
 void ExportDialog::changeEvent(QEvent *e)
 {
     QDialog::changeEvent(e);
-    switch (e->type ())
+    switch (e->type())
     {
         case QEvent::LanguageChange:
             ui->retranslateUi(this);
@@ -62,22 +64,23 @@ void ExportDialog::changeEvent(QEvent *e)
     }
 }
 
-IFontExport::CxxStandart ExportDialog::cxxStandart()
+IFontExport::CxxStandart ExportDialog::cxxStandart() const
 {
-    return ui->rbCxx11->isChecked() ? IFontExport::CxxStandart::Cxx11 :
-           IFontExport::CxxStandart::Cxx14;
+    return ui->rbCxx11->isChecked()
+           ? IFontExport::CxxStandart::Cxx11
+           : IFontExport::CxxStandart::Cxx14;
 }
 
 void ExportDialog::convert()
 {
-    const IFontExport::Mode mode = ui->rbMode_1->isChecked() ?
-                                   IFontExport::Mode::M1 : IFontExport::Mode::M2;
+    const IFontExport::Mode mode = ui->rbMode_1->isChecked()
+                                   ? IFontExport::Mode::M1
+                                   : IFontExport::Mode::M2;
 
     IFontExport *exp;
-
     if (FontMode::Bitmap == fontInfo.mode)
-        exp = new BitColor(ui->fontName->text(), items,  mode, cxxStandart());
-    else
+        exp = new BitColor(ui->fontName->text(), items, mode, cxxStandart());
+    else // FontMode::Antialias
         exp = new GrayscaleColor(ui->fontName->text(), items, mode);
 
     QPair<QString, QString> pair = exp->process();

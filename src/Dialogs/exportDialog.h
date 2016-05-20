@@ -1,36 +1,36 @@
 #ifndef EXPORTDIALOG_H
 #define EXPORTDIALOG_H
 
-#include "../Widgets/symboltableitem.h"
-#include "../font/fontexport.h"
+#include "Widgets/characterInfoTableItem.h"
+#include "font/fontExport.h"
 
 #include <QList>
 #include <QDialog>
 
 namespace Ui
 {
-    class Export;
+class ExportDialog;
 }
 
 struct FontInfo
 {
-    const FontMode  mode;
+    const FontMode mode;
     const QString &family;
-    const int poinSize;
+    const int pointSize;
     const QString &styleName;
 };
 
-class ExportDialog : public QDialog
+class ExportDialog final : public QDialog
 {
         Q_OBJECT
 
     public:
-        explicit ExportDialog(const FontInfo &_fontInfo, const QList<SymbolTableItem *> &_items,
-                              QWidget *parent);
+        explicit ExportDialog(const FontInfo &fontInfo,
+                              const QList<CharacterInfoTableItem *> &items, QWidget *pParent);
         virtual ~ExportDialog();
 
     private:
-        IFontExport::CxxStandart cxxStandart();
+        IFontExport::CxxStandart cxxStandart() const;
         void convert();
 
         void changeEvent(QEvent *e);
@@ -38,13 +38,12 @@ class ExportDialog : public QDialog
     private slots:
         void save();
         void on_saveIfont_clicked();
-
         void on_btUpdate_clicked();
 
     private:
-        Ui::Export *ui;
+        Ui::ExportDialog *ui;
         const FontInfo &fontInfo;
-        const QList<SymbolTableItem *> &items;
+        const QList<CharacterInfoTableItem *> &items;
 };
 
 #endif // EXPORTDIALOG_H
