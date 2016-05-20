@@ -32,7 +32,7 @@ class MainWindow final : public QMainWindow
         QPair<int, int> viewSymbol(int row, int zoom);
 
 
-        void prepareTable(QFont &font);
+        void prepareTable();
         void drawUnknowSymbol(QPainter &painter, int height, int width);
         void setStyleStrategy(QFont::StyleStrategy styleStrategy);
 

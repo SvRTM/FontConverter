@@ -176,17 +176,25 @@ QPair<int, int> MainWindow::viewSymbol(int row, int zoom)
 
 void MainWindow::on_tabWidget_currentChanged(int)
 {
-    prepareTable(m_font);
+    prepareTable();
 }
 
 void MainWindow::on_updateTable_clicked()
 {
-    prepareTable(m_font);
+    prepareTable();
 }
 
-void MainWindow::prepareTable(QFont &font)
+void MainWindow::prepareTable()
 {
-    ICharacters *pIChars = qobject_cast<ICharacters *>(ui->tabWidget->currentWidget());
+    QTabWidget *pTab = ui->tabWidget;
+    if (pTab->currentIndex() == 1)
+    {
+        SelectedCharactersPage *pSelChars = qobject_cast<SelectedCharactersPage *>
+                                            (pTab->widget(1));
+        pSelChars->setFont(m_font);
+    }
+
+    ICharacters *pIChars = qobject_cast<ICharacters *>(pTab->currentWidget());
     const QString chars = pIChars->getCharacters();
 
     CharacterInfoTableView *pCharInfoTableView = ui->characterInfoTableView;
@@ -205,11 +213,11 @@ void MainWindow::prepareTable(QFont &font)
         selRow = pSelModel->selectedRows()[0].row();
     cleareScene(false);
 
-    m_StatusBar.pFontStyleName->setText(font.styleName());
-    m_StatusBar.pFontName->setText(font.family());
-    m_StatusBar.pFontSize->setText(QString ("%1").arg(font.pointSize()));
+    m_StatusBar.pFontStyleName->setText(m_font.styleName());
+    m_StatusBar.pFontName->setText(m_font.family());
+    m_StatusBar.pFontSize->setText(QString ("%1").arg(m_font.pointSize()));
 
-    QFontMetrics fm(font);
+    QFontMetrics fm(m_font);
     int height = fm.height();
 
     pCharInfoTableView->setRowCount(chars.size());
@@ -223,7 +231,7 @@ void MainWindow::prepareTable(QFont &font)
         if (width != 0)
         {
             QPainter painter(&pixmap);
-            painter.setFont(font);
+            painter.setFont(m_font);
             painter.fillRect(0, 0, width, height, Qt::white);
             if (ch == FixedCharactersPage::UnknownSymbol)
                 drawUnknowSymbol(painter, height, width);
@@ -275,10 +283,7 @@ void MainWindow::on_actionImportFont_triggered()
     if (!ok)
         return;
 
-    SelectedCharactersPage *pSelChars = qobject_cast<SelectedCharactersPage *>
-                                        (ui->tabWidget->widget(1));
-    pSelChars->setFont(m_font);
-    prepareTable(m_font);
+    prepareTable();
 }
 
 void MainWindow::on_actionExportFontC_triggered()
@@ -297,7 +302,7 @@ void MainWindow::on_actionNoAntialias_triggered(bool e)
 {
     m_StatusBar.pFontStyleStrategy->setVisible(!e);
     setStyleStrategy(QFont::NoAntialias);
-    prepareTable(m_font);
+    prepareTable();
 }
 
 void MainWindow::on_actionExit_triggered()
