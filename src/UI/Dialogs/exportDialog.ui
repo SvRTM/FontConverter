@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>/*
+ * Copyright © 2016 Artem Smirnov
+ * All right reserved.
+ * Author: Artem Smirnov &lt;msvrtm@gmail.com&gt;
+ * License: http://www.gnu.org/licenses/gpl.txt
+ */
+
+</author>
  <class>ExportDialog</class>
  <widget class="QDialog" name="ExportDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>825</width>
-    <height>695</height>
+    <width>823</width>
+    <height>693</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +27,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Font name:</string>
+        <string>&amp;Font name:</string>
        </property>
        <property name="buddy">
         <cstring>fontName</cstring>
@@ -61,20 +69,29 @@
         <enum>QFrame::Raised</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
          <widget class="QRadioButton" name="rbMode_1">
           <property name="text">
-           <string>Mode 1</string>
+           <string>&amp;Mode 1</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QRadioButton" name="rbMode_2">
           <property name="text">
-           <string>Mode 2</string>
+           <string>Mode &amp;2</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -109,13 +126,22 @@
         <enum>QFrame::Plain</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
          <widget class="QRadioButton" name="rbCxx11">
           <property name="text">
-           <string>C++11</string>
+           <string>&amp;C++11</string>
           </property>
           <property name="checked">
            <bool>false</bool>
@@ -125,7 +151,7 @@
         <item>
          <widget class="QRadioButton" name="rbCxx14">
           <property name="text">
-           <string>C++14</string>
+           <string>C++&amp;14</string>
           </property>
           <property name="checked">
            <bool>true</bool>

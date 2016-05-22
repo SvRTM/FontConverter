@@ -1,6 +1,12 @@
+/*
+ * Copyright © 2016 Artem Smirnov
+ * All right reserved.
+ * Author: Artem Smirnov <msvrtm@gmail.com>
+ * License: http://www.gnu.org/licenses/gpl.txt
+ */
+
 #include "fixedCharactersPage.h"
 #include "ui_fixedCharactersPage.h"
-
 
 QChar FixedCharactersPage::UnknownSymbol = QChar(0xFFFF);
 

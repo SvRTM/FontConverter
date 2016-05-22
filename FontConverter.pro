@@ -15,3 +15,6 @@ VPATH += ./src
 INCLUDEPATH += ./src
 
 include(src/FontConverter.pri)
+
+DISTFILES += \
+    LICENSE

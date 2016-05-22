@@ -1,3 +1,10 @@
+/*
+ * Copyright © 2016 Artem Smirnov
+ * All right reserved.
+ * Author: Artem Smirnov <msvrtm@gmail.com>
+ * License: http://www.gnu.org/licenses/gpl.txt
+ */
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -6,6 +13,7 @@
 #include "Widgets/Tab/selectedCharactersPage.h"
 #include "Widgets/Tab/fixedCharactersPage.h"
 #include "Dialogs/exportDialog.h"
+
 #include <QFontDialog>
 #include <QStaticText>
 #include <QPainter>

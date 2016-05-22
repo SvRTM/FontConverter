@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>/*
+ * Copyright © 2016 Artem Smirnov
+ * All right reserved.
+ * Author: Artem Smirnov &lt;msvrtm@gmail.com&gt;
+ * License: http://www.gnu.org/licenses/gpl.txt
+ */
+
+</author>
  <class>CharacterPropWidget</class>
  <widget class="QWidget" name="CharacterPropWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>333</width>
-    <height>56</height>
+    <width>331</width>
+    <height>54</height>
    </rect>
   </property>
   <property name="windowTitle">
