@@ -61,6 +61,7 @@ struct IFont
 
     explicit IFont(uint8_t _height, uint8_t _sizeOfBlock, Mode _mode)
         : height(_height), sizeOfBlock(_sizeOfBlock), mode(_mode) {}
+    virtual ~IFont() = default;
 
     struct CHAR_INFO
     {
@@ -83,10 +84,10 @@ struct IFont
     virtual const BLOCK *blocks()    const = 0;
     virtual const uint8_t *bitmaps() const = 0;
 
-    static inline const IFont::CHAR_INFO *const descriptor(const wchar_t ch, const IFont &font);
+    static inline const IFont::CHAR_INFO *descriptor(const wchar_t ch, const IFont &font);
 };
 
-const IFont::CHAR_INFO *const IFont::descriptor(const wchar_t ch, const IFont &font)
+const IFont::CHAR_INFO *IFont::descriptor(const wchar_t ch, const IFont &font)
 {
     for (size_t n = 0; n < font.sizeOfBlock; ++n)
     {
