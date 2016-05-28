@@ -7,9 +7,14 @@
 
 #include "fontExport.h"
 
-const char *IFontExport::saveIFont()
-{
-    return
+const QString IFontExport::pIfont_H = QString(
+        "/*\n"
+        " * Copyright © 2016 Artem Smirnov\n"
+        " * All right reserved.\n"
+        " * Author: Artem Smirnov <msvrtm@gmail.com>\n"
+        " * License: http://www.gnu.org/licenses/gpl.txt\n"
+        " */\n"
+        "\n"
         "#ifndef IFONT_H_\n"
         "#define IFONT_H_\n"
         "\n"
@@ -68,9 +73,7 @@ const char *IFontExport::saveIFont()
         "}\n"
         "\n"
         "#endif /* IFONT_H_ */"
-        "\n";
-}
-
+        "\n");
 
 IFontExport::IFontExport(const QString &fontName, QList<CharacterInfoTableItem *> items,
                          const QImage::Format format, const Mode mode, const FontMode fontMode)
@@ -131,8 +134,16 @@ QPair<QString, QString> IFontExport::process()
     prepareBlock(startChar, prevChar, nDescriptor, streamBlock, false);
 
     QString upFName = fontName.toUpper();
-    QString hStr, cppStr;
+    const QString copyright("/*\n"
+                            " * Copyright © 2016 Artem Smirnov\n"
+                            " * All right reserved.\n"
+                            " * Author: Artem Smirnov <msvrtm@gmail.com>\n"
+                            " * License: http://www.gnu.org/licenses/gpl.txt\n"
+                            " */\n"
+                            "\n");
+    QString hStr(copyright), cppStr(copyright);
     QTextStream hFile(&hStr), cppFile(&cppStr);
+
     cppFile << "#include \"" << fontName << ".h\"\n"
             "\n";
     hFile << "#ifndef " << upFName << "_H_\n"

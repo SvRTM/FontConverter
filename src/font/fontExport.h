@@ -132,7 +132,10 @@ enum class FontMode
 class IFontExport
 {
     public:
-        static const char *saveIFont() ;
+        static const QString &saveIFont()
+        {
+            return pIfont_H;
+        }
 
         enum class CxxStandart
         {
@@ -202,6 +205,9 @@ class IFontExport
 
         quint32 positionInBitmap;
         quint32 sizeBitmap;
+
+    private:
+        static const QString pIfont_H;
 };
 
 class BitColor final : public IFontExport
